@@ -47,7 +47,7 @@ frontend workflows onto the canvas:
 See [`COMFYUI.md`](./COMFYUI.md) for the model layout, node graph, VRAM notes,
 and verification commands. Model weights are not bundled with the node package.
 
-### 2.0.1 compatibility notes
+### 2.0.2 compatibility notes
 
 - The Creator and Refiner load their vendored torch layers coherently on the
   GPU, avoiding mixed CPU/CUDA weights under ComfyUI's generic partial-offload

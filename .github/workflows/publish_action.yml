@@ -85,13 +85,13 @@ jobs:
             --url "${api}/publishers/${publisher}/nodes/${node}/versions/${current_id}" \
             --header "${auth}" \
             --header "Content-Type: application/json" \
-            --data '{"changelog":"Fixes official pipeline parity: uses the normal/Euler FlowMatch schedule, floors duration to the released 4N+1 frame rule, and decodes the bundled Audio VAE in float32. Keeps the 2.0 native Creator/Refiner memory and output-contract fixes.","deprecated":false}'
+            --data '{"changelog":"Ships the verified, frontend-importable direct 512 workflow: 256 spatial tokens for square 512x512, 2 seconds at 24 FPS, normal/Euler at 20 steps, a fixed verified seed, and stability-focused prompts. Retains the official FlowMatch schedule, 4N+1 frame rule, and float32 Audio VAE parity fixes.","deprecated":false}'
 
-          for old_version in 1.0.0 1.0.1 2.0.0; do
+          for old_version in 1.0.0 1.0.1 2.0.0 2.0.1; do
             old_id="$(get_version_id "${old_version}")"
             curl --fail-with-body --retry 3 --request PUT \
               --url "${api}/publishers/${publisher}/nodes/${node}/versions/${old_id}" \
               --header "${auth}" \
               --header "Content-Type: application/json" \
-              --data '{"changelog":"Superseded by 2.0.1. Upgrade for official FlowMatch schedule, frame-count, and Audio VAE precision parity.","deprecated":true}'
+              --data '{"changelog":"Superseded by 2.0.2. Upgrade for the verified direct 512 UI workflow and native-pipeline parity fixes.","deprecated":true}'
           done

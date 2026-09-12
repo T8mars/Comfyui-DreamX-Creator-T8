@@ -1,6 +1,6 @@
 [project]
 name = "dreamx-creator-t8"
-version = "2.0.1"
+version = "2.0.2"
 description = "Native ComfyUI V3 nodes for DreamX-Creator joint audio-video generation and causal 2x refinement."
 readme = "README.md"
 requires-python = ">=3.10"
