@@ -23,12 +23,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          current_version="$(python - <<'PY'
-          import tomllib
-          with open("pyproject.toml", "rb") as stream:
-              print(tomllib.load(stream)["project"]["version"])
-          PY
-          )"
+          current_version="$(sed -nE 's/^version = "([^"]+)"/\1/p' pyproject.toml | head -n 1)"
           versions="$(curl --silent --show-error --fail \
             "https://api.comfy.org/nodes/dreamx-creator-t8/versions")"
           if jq -e --arg version "${current_version}" \
@@ -84,12 +79,7 @@ jobs:
             --header "Content-Type: application/json" \
             --data "${node_payload}"
 
-          current_version="$(python - <<'PY'
-          import tomllib
-          with open("pyproject.toml", "rb") as stream:
-              print(tomllib.load(stream)["project"]["version"])
-          PY
-          )"
+          current_version="$(sed -nE 's/^version = "([^"]+)"/\1/p' pyproject.toml | head -n 1)"
           current_id="$(get_version_id "${current_version}")"
           curl --fail-with-body --retry 3 --request PUT \
             --url "${api}/publishers/${publisher}/nodes/${node}/versions/${current_id}" \
