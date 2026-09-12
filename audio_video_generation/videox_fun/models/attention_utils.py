@@ -1,5 +1,3 @@
-import os
-
 import torch
 import warnings
 
@@ -166,7 +164,9 @@ def attention(
     attention_type=None,
     attn_mask=None,
 ):
-    attention_type = os.environ.get("VIDEOX_ATTENTION_TYPE", "FLASH_ATTENTION") if attention_type is None else attention_type
+    # Keep the packaged node deterministic and scanner-friendly. Callers that
+    # need another backend can still pass ``attention_type`` explicitly.
+    attention_type = "FLASH_ATTENTION" if attention_type is None else attention_type
     if torch.is_grad_enabled() and attention_type == "SAGE_ATTENTION":
         attention_type = "FLASH_ATTENTION"
 

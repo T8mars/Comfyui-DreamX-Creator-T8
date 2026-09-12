@@ -1,5 +1,9 @@
 import torch
 
+import comfy.model_management
+import comfy.samplers
+from comfy.nested_tensor import NestedTensor
+
 from comfy_nodes.guider import DreamXMultimodalGuider, apply_multimodal_guidance
 
 
@@ -64,3 +68,25 @@ def test_guider_preserves_comfy_sampler_hook_chain():
     })
     assert calls == ["calc", "pre", "cfg", "post"]
     torch.testing.assert_close(result, torch.full_like(x, 14.0))
+
+
+def test_guider_forces_coherent_full_model_load(monkeypatch):
+    calls = []
+    guider = object.__new__(DreamXMultimodalGuider)
+    guider.model_patcher = object()
+    latent = NestedTensor([
+        torch.zeros(1, 48, 2, 4, 4),
+        torch.zeros(1, 128, 2),
+    ])
+    monkeypatch.setattr(
+        comfy.model_management,
+        "load_models_gpu",
+        lambda models, **kwargs: calls.append((models, kwargs)),
+    )
+    monkeypatch.setattr(
+        comfy.samplers.CFGGuider,
+        "sample",
+        lambda self, noise, latent_image, *args, **kwargs: latent_image,
+    )
+    assert guider.sample(latent, latent) is latent
+    assert calls == [([guider.model_patcher], {"force_full_load": True})]

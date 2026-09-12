@@ -8,6 +8,7 @@ from comfy_nodes.creator_model import (
     DreamXCreatorDiffusion,
     time_shift_sigma,
 )
+from comfy_nodes.loaders import force_full_creator_load
 
 
 class ToyJoint(torch.nn.Module):
@@ -25,6 +26,18 @@ class ToyJoint(torch.nn.Module):
             "video": torch.stack(video["x"]) * 2,
             "audio": torch.stack(audio["x"]) * 3,
         }
+
+
+def test_creator_prepare_sampling_forces_full_weight_load():
+    received = {}
+
+    def executor(model, noise_shape, conds, *args, **kwargs):
+        received.update(kwargs)
+        return "prepared"
+
+    result = force_full_creator_load(executor, object(), (1, 8), {}, force_full_load=False)
+    assert result == "prepared"
+    assert received["force_full_load"] is True
 
 
 def test_adapter_builds_first_frame_zero_timestep_and_bridge_masks():

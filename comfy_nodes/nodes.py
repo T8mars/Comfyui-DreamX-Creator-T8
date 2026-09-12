@@ -146,7 +146,10 @@ class DreamXFirstFrameAVLatent(io.ComfyNode):
                 io.Float.Input("duration", default=5.0, min=0.25, max=60.0, step=0.25),
                 io.Float.Input("fps", default=24.0, min=1.0, max=120.0, step=1.0),
                 io.Int.Input("target_spatial_tokens", default=880, min=64, max=4096, step=1),
-                io.Int.Input("batch_size", default=1, min=1, max=16),
+                io.Int.Input(
+                    "batch_size", default=1, min=1, max=1,
+                    tooltip="One video per execution; use ComfyUI queue batching for variants.",
+                ),
             ],
             outputs=[
                 io.Conditioning.Output("positive"), io.Conditioning.Output("negative"),
@@ -157,6 +160,11 @@ class DreamXFirstFrameAVLatent(io.ComfyNode):
 
     @classmethod
     def execute(cls, positive, negative, vae, start_image, duration, fps, target_spatial_tokens, batch_size):
+        if int(batch_size) != 1:
+            raise ValueError(
+                "DreamX outputs one synchronized video/audio pair per execution. "
+                "Keep batch_size=1 and use ComfyUI queue batching for variants."
+            )
         source_h, source_w = int(start_image.shape[1]), int(start_image.shape[2])
         height, width, _ = compute_dynamic_resolution(
             source_h, source_w, int(target_spatial_tokens)
@@ -311,17 +319,23 @@ class DreamXRefinerLoader(io.ComfyNode):
             inputs=[
                 ROOT_INPUT(), DTYPE_INPUT(),
                 io.Int.Input(
-                    "window_chunk", default=4, min=1, max=64,
-                    tooltip="Windows-safe attention window batch; lower uses less VRAM.",
+                    "window_chunk", default=1, min=1, max=64,
+                    tooltip="24 GB Windows-safe attention batch; raise only with measured VRAM headroom.",
+                ),
+                io.Int.Input(
+                    "kv_history_frames", default=3, min=1, max=64,
+                    tooltip="Latent history frames; 3 is 24 GB-safe, 9 is the high-memory model preset.",
                 ),
             ],
             outputs=[Refiner.Output("refiner")],
         )
 
     @classmethod
-    def execute(cls, model_root, dtype, window_chunk):
+    def execute(cls, model_root, dtype, window_chunk, kv_history_frames):
         root = resolve_and_validate(model_root)
-        return io.NodeOutput(load_refiner(root, dtype_from_name(dtype), window_chunk))
+        return io.NodeOutput(
+            load_refiner(root, dtype_from_name(dtype), window_chunk, kv_history_frames)
+        )
 
 
 class DreamXCausalRefine(io.ComfyNode):
@@ -345,7 +359,7 @@ class DreamXCausalRefine(io.ComfyNode):
                     tooltip="-1 applies the LQ anchor to every trained layer.",
                 ),
             ],
-            outputs=[io.Image.Output("images"), io.Latent.Output("video_latent")],
+            outputs=[io.Image.Output("images")],
         )
 
     @classmethod
@@ -353,10 +367,11 @@ class DreamXCausalRefine(io.ComfyNode):
         cls, refiner, vae, positive, images, scale, seed, sigma_start,
         use_lq_anchor, lq_guidance_scale, anchor_context_noise, anchor_keep_prefix,
     ):
-        return io.NodeOutput(*run_refiner(
+        images_out, _ = run_refiner(
             refiner, vae, positive, images, scale, seed, sigma_start,
             use_lq_anchor, lq_guidance_scale, anchor_context_noise, anchor_keep_prefix,
-        ))
+        )
+        return io.NodeOutput(images_out)
 
 
 NODE_LIST = [

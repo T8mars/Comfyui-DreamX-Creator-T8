@@ -1,6 +1,6 @@
 [project]
 name = "dreamx-creator-t8"
-version = "1.0.1"
+version = "2.0.0"
 description = "Native ComfyUI V3 nodes for DreamX-Creator joint audio-video generation and causal 2x refinement."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,4 +35,6 @@ Documentation = "https://github.com/T8mars/Comfyui-DreamX-Creator-T8/blob/main/C
 [tool.comfy]
 PublisherId = "t8star"
 DisplayName = "DreamX Creator T8"
+Icon = "https://raw.githubusercontent.com/T8mars/Comfyui-DreamX-Creator-T8/main/assets/dreamx-icon.svg"
+Banner = "https://raw.githubusercontent.com/T8mars/Comfyui-DreamX-Creator-T8/main/assets/dreamx-banner.svg"
 requires-comfyui = ">=0.34.0"

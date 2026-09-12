@@ -47,6 +47,14 @@ mapped onto ComfyUI's single packed-latent schedule; the released preset is 5.0/
 Drag `examples/dreamx_creator_ui.json` directly onto the ComfyUI canvas (or use
 **Workflows → Open**) and select a start image in `Load Image`.
 
+DreamX emits one synchronized audio/video pair per execution, so `batch_size` is
+intentionally fixed at 1. Use ComfyUI's queue batch count to generate multiple
+seed variants. Requested duration is rounded to the nearest Wan-compatible `4N+1`
+frame count; for example, 5 seconds at 24 FPS becomes 121 frames (about 5.04 s).
+The graph deliberately uses native `VAEDecodeTiled` with 512 px / 64-frame tiles:
+on long video, cuDNN can report memory pressure as an execution failure rather
+than a standard OOM, which bypasses the ordinary VAE node's automatic fallback.
+
 ## Causal 2x refiner graph
 
 `DreamX Causal Refiner Loader` loads the released SR-DiT 5B and Flash latent
@@ -56,7 +64,11 @@ released sigma/anchor controls, reports block progress, and honors ComfyUI's can
 signal between causal blocks. Recombine the returned frames with the original audio
 through native `Create Video`. Inputs that are not `4N+1` frames are padded before
 Wan VAE encoding and cropped after decoding, so the returned video keeps the exact
-source frame count and remains aligned to the original audio.
+source frame count and remains aligned to the original audio. The public node returns
+only the exact-length IMAGE sequence; its internally padded latent is not exposed as
+a generic LATENT that native `VAE Decode` could accidentally decode to extra frames.
+Wan VAE encoding and final decoding are tiled internally with the same conservative
+defaults used by ComfyUI's native tiled VAE nodes.
 
 Drag `examples/dreamx_refiner_ui.json` directly onto the ComfyUI canvas. This is a
 separate second-phase workflow so the 7B Creator and 5B Refiner do not stay resident
@@ -66,14 +78,20 @@ preserved automatically.
 ## Memory notes
 
 The released generator is about 7B parameters and the refiner is about 5B. The
-loaders create ComfyUI model patchers on CPU and let ComfyUI move/offload weights.
-Use bfloat16 on modern NVIDIA GPUs. Generator and refiner are intended to run in
+loaders create ComfyUI model patchers on CPU; before Creator or Refiner sampling,
+each model's regular torch layers are loaded together on the GPU because generic
+partial-weight offload can otherwise mix CPU weights with CUDA activations. Use
+bfloat16 on modern NVIDIA GPUs. Generator and refiner are intended to run in
 separate graph phases; ComfyUI can unload one before loading the next. At the
-released 5-second / ~880-token preset, activation memory can still be substantial.
-The refiner defaults to `window_chunk=4` for the Windows SDPA fallback, retries once
-with `window_chunk=1` after a CUDA OOM, clears streaming KV caches before VAE decode,
-and rejects outputs above 8 MiPixels. Lower the loader's window chunk to reduce peak
-VRAM. Pickle-backed official checkpoints are SHA-256 verified against
+released 5-second / ~880-token preset, activation memory can still be substantial
+and a 24 GB GPU runs near its VRAM limit.
+The refiner defaults to `window_chunk=1` and `kv_history_frames=3` for 24 GB Windows
+systems, where WDDM can spill CUDA allocations into shared RAM instead of raising a
+catchable OOM. The model's higher-context preset is 9 latent history frames; select it
+only with measured VRAM and system commit headroom. The node clears unused CUDA
+workspaces during causal sampling, clears streaming KV caches before VAE decode, and
+rejects outputs above 8 MiPixels. Pickle-backed official checkpoints are SHA-256
+verified against
 `model_manifest.json` before safe tensor-only loading.
 
 ## Tests

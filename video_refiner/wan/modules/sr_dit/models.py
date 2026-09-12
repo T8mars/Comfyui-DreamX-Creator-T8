@@ -1,7 +1,6 @@
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 from __future__ import annotations
 import math
-import os
 import warnings
 
 import torch
@@ -47,8 +46,7 @@ if FLASH_ATTN_2_AVAILABLE:
 # FlexAttention for parallel block-wise causal attention (PyTorch 2.6+)
 try:
     from torch.nn.attention.flex_attention import create_block_mask, flex_attention
-    if os.environ.get("DISABLE_FLEX_COMPILE", "0") != "1":
-        flex_attention = torch.compile(flex_attention, dynamic=False, mode="default")
+    flex_attention = torch.compile(flex_attention, dynamic=False, mode="default")
     FLEX_ATTN_AVAILABLE = True
 except ImportError:
     FLEX_ATTN_AVAILABLE = False

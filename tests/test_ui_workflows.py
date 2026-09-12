@@ -45,3 +45,26 @@ def test_creator_wires_runtime_fps_into_video_container():
     create_video = next(node for node in nodes.values() if node["type"] == "CreateVideo")
     fps_link = first_frame["outputs"][6]["links"][0]
     assert create_video["inputs"][2]["link"] == fps_link
+
+
+def test_creator_uses_explicit_tiled_video_decode():
+    workflow = json.loads(WORKFLOWS[0].read_text(encoding="utf-8"))
+    decode = next(node for node in workflow["nodes"] if node["id"] == 13)
+    assert decode["type"] == "VAEDecodeTiled"
+    assert decode["widgets_values_named"] == {
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8,
+    }
+
+
+def test_refiner_exposes_only_frame_exact_image_output():
+    workflow = json.loads(WORKFLOWS[1].read_text(encoding="utf-8"))
+    loader = next(node for node in workflow["nodes"] if node["type"] == "DreamXRefinerLoader")
+    refiner = next(node for node in workflow["nodes"] if node["type"] == "DreamXCausalRefine")
+    assert loader["widgets_values_named"]["window_chunk"] == 1
+    assert loader["widgets_values_named"]["kv_history_frames"] == 3
+    assert [(output["name"], output["type"]) for output in refiner["outputs"]] == [
+        ("images", "IMAGE")
+    ]

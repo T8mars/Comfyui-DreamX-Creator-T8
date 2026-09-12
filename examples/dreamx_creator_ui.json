@@ -167,14 +167,20 @@
       "properties": {"Node name for S&R": "DreamXSplitAVLatent"}
     },
     {
-      "id": 13, "type": "VAEDecode", "pos": [2630, 80], "size": [300, 110],
+      "id": 13, "type": "VAEDecodeTiled", "pos": [2630, 80], "size": [330, 230],
       "flags": {}, "order": 12, "mode": 0,
       "inputs": [
         {"name": "samples", "type": "LATENT", "link": 18},
-        {"name": "vae", "type": "VAE", "link": 19}
+        {"name": "vae", "type": "VAE", "link": 19},
+        {"name": "tile_size", "type": "INT", "widget": {"name": "tile_size"}, "link": null},
+        {"name": "overlap", "type": "INT", "widget": {"name": "overlap"}, "link": null},
+        {"name": "temporal_size", "type": "INT", "widget": {"name": "temporal_size"}, "link": null},
+        {"name": "temporal_overlap", "type": "INT", "widget": {"name": "temporal_overlap"}, "link": null}
       ],
       "outputs": [{"name": "IMAGE", "type": "IMAGE", "links": [22]}],
-      "properties": {"Node name for S&R": "VAEDecode", "cnr_id": "comfy-core"}
+      "properties": {"Node name for S&R": "VAEDecodeTiled", "cnr_id": "comfy-core"},
+      "widgets_values": [512, 64, 64, 8],
+      "widgets_values_named": {"tile_size": 512, "overlap": 64, "temporal_size": 64, "temporal_overlap": 8}
     },
     {
       "id": 14, "type": "DreamXAudioVAEDecode", "pos": [2630, 300], "size": [320, 110],

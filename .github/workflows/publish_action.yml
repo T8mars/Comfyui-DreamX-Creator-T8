@@ -22,3 +22,57 @@ jobs:
         uses: Comfy-Org/publish-node-action@main
         with:
           personal_access_token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+      - name: Update Registry metadata and old-version status
+        env:
+          REGISTRY_ACCESS_TOKEN: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          api="https://api.comfy.org"
+          publisher="t8star"
+          node="dreamx-creator-t8"
+          auth="Authorization: Bearer ${REGISTRY_ACCESS_TOKEN}"
+
+          get_version_id() {
+            local version="$1"
+            local version_id=""
+            for _ in {1..12}; do
+              version_id="$(curl --silent --show-error --fail \
+                "${api}/nodes/${node}/versions/${version}" | jq -r '.id // empty')" || true
+              if [[ -n "${version_id}" ]]; then
+                printf '%s' "${version_id}"
+                return 0
+              fi
+              sleep 5
+            done
+            echo "Registry version ${version} was not readable after publication" >&2
+            return 1
+          }
+
+          curl --fail-with-body --retry 3 --request PUT \
+            --url "${api}/publishers/${publisher}/nodes/${node}" \
+            --header "${auth}" \
+            --header "Content-Type: application/json" \
+            --data '{"tags":["video","audio","image-to-video","upscaling"]}'
+
+          current_version="$(python - <<'PY'
+          import tomllib
+          with open("pyproject.toml", "rb") as stream:
+              print(tomllib.load(stream)["project"]["version"])
+          PY
+          )"
+          current_id="$(get_version_id "${current_version}")"
+          curl --fail-with-body --retry 3 --request PUT \
+            --url "${api}/publishers/${publisher}/nodes/${node}/versions/${current_id}" \
+            --header "${auth}" \
+            --header "Content-Type: application/json" \
+            --data '{"changelog":"BREAKING: fixes coherent 24 GB Creator/Refiner weight loading, bounds Windows Refiner window/KV memory and tiles long-video VAE processing; enforces one synchronized video per execution, snaps duration to the nearest 4N+1 frame count, and returns only exact-length IMAGE output from the Refiner.","deprecated":false}'
+
+          for old_version in 1.0.0 1.0.1; do
+            old_id="$(get_version_id "${old_version}")"
+            curl --fail-with-body --retry 3 --request PUT \
+              --url "${api}/publishers/${publisher}/nodes/${node}/versions/${old_id}" \
+              --header "${auth}" \
+              --header "Content-Type: application/json" \
+              --data '{"changelog":"Superseded by 2.0.0. Upgrade for safe full-weight Creator/Refiner loading and corrected frame/output contracts.","deprecated":true}'
+          done

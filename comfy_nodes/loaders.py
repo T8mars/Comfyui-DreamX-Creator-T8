@@ -8,6 +8,7 @@ import torch
 
 import comfy.model_management
 import comfy.model_patcher
+import comfy.patcher_extension
 import comfy.sd
 import comfy.utils
 
@@ -20,12 +21,24 @@ from .utils import (
 )
 
 
+def force_full_creator_load(executor, model, noise_shape, conds, *args, **kwargs):
+    """Prevent generic partial-weight offload for vendored DreamX torch layers."""
+    kwargs["force_full_load"] = True
+    return executor(model, noise_shape, conds, *args, **kwargs)
+
+
 def load_model_patcher(model_root, dtype: torch.dtype):
     base_model = load_creator_model(model_root, dtype)
     patcher = comfy.model_patcher.ModelPatcher(
         base_model,
         load_device=comfy.model_management.get_torch_device(),
         offload_device=comfy.model_management.unet_offload_device(),
+    )
+
+    patcher.add_wrapper_with_key(
+        comfy.patcher_extension.WrappersMP.PREPARE_SAMPLING,
+        "dreamx_force_full_creator_load",
+        force_full_creator_load,
     )
     return patcher
 

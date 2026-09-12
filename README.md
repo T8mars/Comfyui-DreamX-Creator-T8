@@ -21,6 +21,8 @@
 
 ## :art: ComfyUI Native Nodes by T8star
 
+![DreamX Creator T8 banner](./assets/dreamx-banner.svg)
+
 This repository packages the released DreamX-Creator generator and causal 2x
 refiner as native ComfyUI V3 nodes. It provides frontend-importable workflows,
 native `MODEL`, `CLIP`, `VAE`, `LATENT`, `AUDIO`, `GUIDER`, and `VIDEO` types,
@@ -44,6 +46,22 @@ frontend workflows onto the canvas:
 
 See [`COMFYUI.md`](./COMFYUI.md) for the model layout, node graph, VRAM notes,
 and verification commands. Model weights are not bundled with the node package.
+
+### 2.0.0 compatibility notes
+
+- The Creator and Refiner load their vendored torch layers coherently on the
+  GPU, avoiding mixed CPU/CUDA weights under ComfyUI's generic partial-offload
+  path.
+- One synchronized audio/video pair is generated per execution; use queue batching
+  for multiple seed variants.
+- Duration is rounded to the nearest Wan-compatible `4N+1` frame count (5 s at
+  24 FPS becomes 121 frames), and the Refiner exposes only its exact-length IMAGE
+  sequence instead of a padded generic LATENT.
+- The shipped Creator UI graph uses native `VAEDecodeTiled`, while the Refiner
+  tiles its Wan VAE encode/decode internally, avoiding long-video cuDNN failures.
+- The Refiner loader defaults to `window_chunk=1` and three latent KV-history
+  frames on 24 GB Windows systems to limit WDDM shared-memory spill; the original
+  nine-frame history remains selectable on higher-memory systems.
 
 ## :link: T8star Links
 

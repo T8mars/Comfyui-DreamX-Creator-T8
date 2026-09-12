@@ -55,8 +55,6 @@ WHAT IS DELIBERATELY NOT DONE
   used instead, with `prewarm_quantizer` to keep inductor's per-shape compile
   off the inference path -- the same lesson the block-grid kernel taught.
 """
-import os
-
 import torch
 import torch.nn as nn
 
@@ -117,7 +115,7 @@ def _quantize_rowwise_impl(x):
 # Keeping them as two torch.compile objects (rather than letting dynamo switch
 # the single frame to automatic-dynamic) is what preserves the static kernel for
 # the hot shape -- a dynamic guard on the same frame would shadow it.
-_QUANT_MAX_COMPILES = int(os.environ.get("FP8_QUANT_MAX_COMPILES", "32"))
+_QUANT_MAX_COMPILES = 32
 _quantize_static = None
 _quantize_dynamic = None
 _static_shapes = set()
@@ -157,8 +155,6 @@ def _raise_recompile_limit(n):
 def quantize_rowwise(x):
     """[..., K] -> (fp8 [..., K], fp32 scale [..., 1]) such that q*scale ~= x."""
     global _quantize_static, _quantize_dynamic
-    if os.environ.get("FP8_COMPILE_QUANT", "1") == "0":
-        return _quantize_rowwise_impl(x)
     key = tuple(x.shape)
     if key in _static_shapes or len(_static_shapes) < _QUANT_MAX_COMPILES:
         if _quantize_static is None:

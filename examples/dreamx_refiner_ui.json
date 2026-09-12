@@ -55,17 +55,21 @@
       "widgets_values": ["auto"], "widgets_values_named": {"model_root": "auto"}
     },
     {
-      "id": 6, "type": "DreamXRefinerLoader", "pos": [800, 340], "size": [350, 150],
+      "id": 6, "type": "DreamXRefinerLoader", "pos": [800, 340], "size": [350, 175],
       "flags": {}, "order": 5, "mode": 0,
       "inputs": [
         {"name": "model_root", "type": "STRING", "widget": {"name": "model_root"}, "link": null},
         {"name": "dtype", "type": "COMBO", "widget": {"name": "dtype"}, "link": null},
-        {"name": "window_chunk", "type": "INT", "widget": {"name": "window_chunk"}, "link": null}
+        {"name": "window_chunk", "type": "INT", "widget": {"name": "window_chunk"}, "link": null},
+        {"name": "kv_history_frames", "type": "INT", "widget": {"name": "kv_history_frames"}, "link": null}
       ],
       "outputs": [{"name": "refiner", "type": "DREAMX_REFINER", "links": [5]}],
       "properties": {"Node name for S&R": "DreamXRefinerLoader"},
-      "widgets_values": ["auto", "bfloat16", 4],
-      "widgets_values_named": {"model_root": "auto", "dtype": "bfloat16", "window_chunk": 4}
+      "widgets_values": ["auto", "bfloat16", 1, 3],
+      "widgets_values_named": {
+        "model_root": "auto", "dtype": "bfloat16", "window_chunk": 1,
+        "kv_history_frames": 3
+      }
     },
     {
       "id": 7, "type": "DreamXCausalRefine", "pos": [1230, 110], "size": [400, 370],
@@ -84,8 +88,7 @@
         {"name": "anchor_keep_prefix", "type": "INT", "widget": {"name": "anchor_keep_prefix"}, "link": null}
       ],
       "outputs": [
-        {"name": "images", "type": "IMAGE", "links": [7]},
-        {"name": "video_latent", "type": "LATENT", "links": null}
+        {"name": "images", "type": "IMAGE", "links": [7]}
       ],
       "properties": {"Node name for S&R": "DreamXCausalRefine"},
       "widgets_values": [2, 20260912, 0.6251, true, 1.0, 0, -1],

@@ -302,11 +302,11 @@ class CausalInferencePipeline(torch.nn.Module):
         self.last_generation_time = None
         self.first_chunk_time = None
 
-        # Stage split (pre / dit / decode) for every clip. `PROFILE_SR=1` adds the
-        # per-block DiT detail, which costs a sync per block.
+        # Stage split (pre / dit / decode) for every clip. Per-block timing stays
+        # disabled in the packaged node because it adds a device sync per block.
         self.stage_timer = StageTimer(
             sync=torch.cuda.synchronize,
-            detail=os.environ.get("PROFILE_SR", "0") == "1")
+            detail=False)
 
         logging.info(f"KV inference with {self.num_frame_per_block} frames per block"
               f", kv_len={self.stream_kv_len}")
@@ -382,10 +382,15 @@ class CausalInferencePipeline(torch.nn.Module):
         target = upsampler_cfg.get("target")
         params = upsampler_cfg.get("params", {})
 
-        module_path, cls_name = target.rsplit(".", 1)
-        import importlib
-        mod = importlib.import_module(module_path)
-        cls = getattr(mod, cls_name)
+        cls_name = target.rsplit(".", 1)[-1]
+        if cls_name == "FlashLatentUpsampler":
+            from ..wan.modules.latent_upsampler.flash_latent_up import FlashLatentUpsampler
+            cls = FlashLatentUpsampler
+        elif cls_name == "LatentUpsampler":
+            from ..wan.modules.latent_upsampler.wan22_2d_latent_up import LatentUpsampler
+            cls = LatentUpsampler
+        else:
+            raise ValueError(f"Unsupported latent upsampler target: {target}")
         upsampler = cls(**params)
 
         precision_key = getattr(args, "latent_upsampler_precision", "bf16")
@@ -857,6 +862,13 @@ class CausalInferencePipeline(torch.nn.Module):
         _mark = self.stage_timer.lap("pre", _mark)
 
         for block_index, current_num_frames in enumerate(tqdm.tqdm(all_num_frames)):
+            # On Windows/WDDM, PyTorch can retain shape-specific SDPA workspaces
+            # and silently spill them into shared system RAM instead of raising a
+            # CUDA OOM. Each causal block changes the KV shape, so release only
+            # unused allocator blocks at the boundary while preserving the live
+            # model, output, anchor and rolling KV tensors.
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             _blk = self.stage_timer.tick() if self.stage_timer.detail else None
             noisy_input = sr_noise[
                 :, current_start_frame - num_input_frames:current_start_frame + current_num_frames - num_input_frames]
@@ -898,6 +910,8 @@ class CausalInferencePipeline(torch.nn.Module):
                     anchor_kv = _expand_anchor_kv_to_hr(
                         anchor_kv, f=lq_chunk.shape[1],
                         lq_hw=anchor_lq_tok, hr_hw=anchor_hr_tok)
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
             for index, current_timestep in enumerate(current_denoising_list):
                 timestep = torch.ones(
@@ -944,6 +958,8 @@ class CausalInferencePipeline(torch.nn.Module):
                         cond_y=chunk_cond_y,
                         kv_len=self.stream_kv_len,
                         anchor_kv=anchor_kv, anchor_cfg=anchor_cfg)
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
             output[:, current_start_frame:current_start_frame + current_num_frames] = denoised_pred
 
@@ -955,6 +971,8 @@ class CausalInferencePipeline(torch.nn.Module):
                 temporal_offset=temporal_offset,
                 cond_y=chunk_cond_y,
                 kv_len=self.stream_kv_len)
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
             # [KV] Confirm the streaming cache is actually truncated to kv_len chunks.
             # cache_k of layer 0 has shape [b, tokens, heads, dim]; tokens = frames * (h*w).

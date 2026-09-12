@@ -16,6 +16,10 @@ from .utils import REPO_ROOT, verify_trusted_model_file
 
 
 MAX_REFINER_OUTPUT_PIXELS = 8 * 1024 * 1024
+VAE_TILE_SIZE = 512
+VAE_TILE_OVERLAP = 64
+VAE_TEMPORAL_SIZE = 64
+VAE_TEMPORAL_OVERLAP = 8
 
 
 @dataclass
@@ -47,7 +51,10 @@ def _set_window_chunk(pipeline, window_chunk: int) -> None:
 
 
 def load_refiner(
-    model_root: Path, dtype: torch.dtype, window_chunk: int = 4
+    model_root: Path,
+    dtype: torch.dtype,
+    window_chunk: int = 1,
+    kv_history_frames: int = 3,
 ) -> DreamXRefinerHandle:
     from omegaconf import OmegaConf
 
@@ -63,7 +70,10 @@ def load_refiner(
     config.timestep_shift = float(config.model_kwargs.get("timestep_shift", 5.0))
     config.independent_first_frame = False
     config.num_frame_per_block = int(config.get("num_frame_per_block", 3))
-    config.stream_kv_len = int(config.dit_arch_config.get("stream_kv_len", 9))
+    kv_history_frames = max(1, int(kv_history_frames))
+    config.stream_kv_len = kv_history_frames
+    config.dit_arch_config.stream_kv_len = kv_history_frames
+    config.dit_arch_config.window_causal_kv_len = kv_history_frames
     config.dit_arch_config.window_chunk = max(1, int(window_chunk))
     config.latent_upsample_mode = upsampler_config.latent_upsample_mode
     config.latent_upsampler_precision = (
@@ -137,7 +147,18 @@ def run_refiner(
             "Resize the input before 2x refinement."
         )
 
-    lr_raw = vae.encode(images[..., :3])
+    # Explicit tiling is required for long/high-resolution video. Comfy's
+    # regular VAE methods only auto-fallback on errors classified as OOM, while
+    # cuDNN can report the same memory pressure as CUDNN_STATUS_EXECUTION_FAILED.
+    with torch.inference_mode():
+        lr_raw = vae.encode_tiled(
+            images[..., :3],
+            tile_x=VAE_TILE_SIZE,
+            tile_y=VAE_TILE_SIZE,
+            overlap=VAE_TILE_OVERLAP,
+            tile_t=VAE_TEMPORAL_SIZE,
+            overlap_t=VAE_TEMPORAL_OVERLAP,
+        )
     expected_shape = (48, ((vae_frames - 1) // 4) + 1, images.shape[1] // 16, images.shape[2] // 16)
     if lr_raw.ndim != 5 or tuple(lr_raw.shape[1:]) != expected_shape:
         raise ValueError(
@@ -155,7 +176,13 @@ def run_refiner(
             [lr_latent, lr_latent[:, -1:].expand(-1, pad, -1, -1, -1)], dim=1
         )
 
-    comfy.model_management.load_models_gpu([refiner.patcher])
+    # The released SR-DiT also vendors regular torch modules, so generic partial
+    # weight offload cannot safely leave individual layers on CPU while its
+    # activations run on CUDA. The 5B bf16 refiner fits fully on the supported
+    # 24 GB target after Comfy unloads the VAE.
+    comfy.model_management.load_models_gpu(
+        [refiner.patcher], force_full_load=True
+    )
     device = refiner.patcher.load_device
     lr_latent = lr_latent.to(device=device, dtype=refiner.dtype)
     target_h = lr_latent.shape[-2] * int(scale)
@@ -219,7 +246,23 @@ def run_refiner(
     raw_output = latent_format.process_out(output.float()).to(
         comfy.model_management.intermediate_device()
     )
-    images_out = vae.decode(raw_output)
+    spatial = int(vae.spacial_compression_decode())
+    temporal = vae.temporal_compression_decode()
+    tile_t = None
+    overlap_t = None
+    if temporal is not None:
+        temporal = int(temporal)
+        tile_t = max(2, VAE_TEMPORAL_SIZE // temporal)
+        overlap_t = max(1, min(tile_t // 2, VAE_TEMPORAL_OVERLAP // temporal))
+    with torch.inference_mode():
+        images_out = vae.decode_tiled(
+            raw_output,
+            tile_x=VAE_TILE_SIZE // spatial,
+            tile_y=VAE_TILE_SIZE // spatial,
+            overlap=VAE_TILE_OVERLAP // spatial,
+            tile_t=tile_t,
+            overlap_t=overlap_t,
+        )
     if images_out.ndim == 5:
         images_out = images_out.reshape(
             -1, images_out.shape[-3], images_out.shape[-2], images_out.shape[-1]

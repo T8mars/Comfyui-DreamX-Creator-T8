@@ -6,6 +6,7 @@ import math
 
 import torch
 
+import comfy.model_management
 import comfy.model_patcher
 import comfy.samplers
 import node_helpers
@@ -69,6 +70,14 @@ class DreamXMultimodalGuider(comfy.samplers.CFGGuider):
         if not getattr(latent_image, "is_nested", False):
             raise ValueError("DreamX guider requires a DreamX audio/video NestedTensor latent")
         self.video_numel = math.prod(latent_image.unbind()[0].shape[1:])
+        # DreamX vendors regular torch Linear/Conv modules rather than Comfy's
+        # manual-cast ops. Comfy's generic partial-weight offload would therefore
+        # leave CPU weights behind while activations are on CUDA. The released
+        # bf16 model fits fully on the supported 24 GB target once CLIP/VAE are
+        # unloaded, so require a coherent full load before sampling.
+        comfy.model_management.load_models_gpu(
+            [self.model_patcher], force_full_load=True
+        )
         return super().sample(noise, latent_image, *args, **kwargs)
 
     def predict_noise(self, x, timestep, model_options=None, seed=None):

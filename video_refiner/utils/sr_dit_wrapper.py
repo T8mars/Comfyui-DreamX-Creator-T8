@@ -147,15 +147,16 @@ def load_lightvae_nu(module_path: str = DEFAULT_NU_LIGHTVAE_MODULE):
         if f is None or want not in Path(f).resolve().parents:
             del sys.modules[name]
 
-    pkg = importlib.import_module("lightvae_nu")
+    import lightvae_nu as pkg
     got = Path(pkg.__file__).resolve()
     if want not in got.parents:
         raise ImportError(
             f"lightvae_nu resolved to {got}, not under module_path={module_path}. "
             f"A same-named copy shadowed the real package; remove it from "
             f"sys.path or pass a different --nu_lightvae_module_path.")
-    pkg.student = importlib.import_module("lightvae_nu.student")
-    pkg.channels = importlib.import_module("lightvae_nu.channels")
+    from lightvae_nu import channels, student
+    pkg.student = student
+    pkg.channels = channels
     return pkg
 
 
