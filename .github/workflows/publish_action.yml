@@ -18,7 +18,27 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v7
+      - name: Check whether this version is already published
+        id: registry-version
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_version="$(python - <<'PY'
+          import tomllib
+          with open("pyproject.toml", "rb") as stream:
+              print(tomllib.load(stream)["project"]["version"])
+          PY
+          )"
+          versions="$(curl --silent --show-error --fail \
+            "https://api.comfy.org/nodes/dreamx-creator-t8/versions")"
+          if jq -e --arg version "${current_version}" \
+            'any(.[]; .version == $version)' <<<"${versions}" >/dev/null; then
+            echo "exists=true" >>"${GITHUB_OUTPUT}"
+          else
+            echo "exists=false" >>"${GITHUB_OUTPUT}"
+          fi
       - name: Publish Custom Node
+        if: steps.registry-version.outputs.exists != 'true'
         uses: Comfy-Org/publish-node-action@main
         with:
           personal_access_token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
@@ -38,7 +58,9 @@ jobs:
             local version_id=""
             for _ in {1..12}; do
               version_id="$(curl --silent --show-error --fail \
-                "${api}/nodes/${node}/versions/${version}" | jq -r '.id // empty')" || true
+                "${api}/nodes/${node}/versions" | \
+                jq -r --arg version "${version}" \
+                  '.[] | select(.version == $version) | .id' | head -n 1)" || true
               if [[ -n "${version_id}" ]]; then
                 printf '%s' "${version_id}"
                 return 0
@@ -49,11 +71,18 @@ jobs:
             return 1
           }
 
+          node_payload="$(curl --silent --show-error --fail \
+            "${api}/nodes/${node}" | jq -c \
+            '{id, name, category, description, author, license, icon, repository,
+              tags: ["video", "audio", "image-to-video", "upscaling"],
+              supported_os, supported_accelerators, supported_comfyui_version,
+              supported_comfyui_frontend_version, preempted_comfy_node_names,
+              banner_url} | with_entries(select(.value != null))')"
           curl --fail-with-body --retry 3 --request PUT \
             --url "${api}/publishers/${publisher}/nodes/${node}" \
             --header "${auth}" \
             --header "Content-Type: application/json" \
-            --data '{"tags":["video","audio","image-to-video","upscaling"]}'
+            --data "${node_payload}"
 
           current_version="$(python - <<'PY'
           import tomllib
