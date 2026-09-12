@@ -323,7 +323,7 @@ class CreatorAudioModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
 
         # --- Load state dict ---
         if os.path.exists(model_file):
-            state_dict = torch.load(model_file, map_location="cpu")
+            state_dict = torch.load(model_file, map_location="cpu", weights_only=True)
         elif os.path.exists(model_file_safetensors):
             from safetensors.torch import load_file
             state_dict = load_file(model_file_safetensors)

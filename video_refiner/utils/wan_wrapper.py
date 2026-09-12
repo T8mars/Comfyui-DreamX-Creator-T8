@@ -2,9 +2,9 @@ import os
 from typing import List
 import torch
 
-from wan.modules.tokenizers import HuggingfaceTokenizer
-from wan.modules.t5 import umt5_xxl
-from wan.modules.vae import _video_vae
+from ..wan.modules.tokenizers import HuggingfaceTokenizer
+from ..wan.modules.t5 import umt5_xxl
+from ..wan.modules.vae import _video_vae
 
 
 class WanTextEncoder(torch.nn.Module):
@@ -18,8 +18,10 @@ class WanTextEncoder(torch.nn.Module):
             device=torch.device('cpu')
         ).eval().requires_grad_(False)
         self.text_encoder.load_state_dict(
-            torch.load(os.path.join(wan_model_dir, "models_t5_umt5-xxl-enc-bf16.pth"),
-                       map_location='cpu', weights_only=False)
+            torch.load(
+                os.path.join(wan_model_dir, "models_t5_umt5-xxl-enc-bf16.pth"),
+                map_location='cpu', weights_only=True,
+            )
         )
 
         self.tokenizer = HuggingfaceTokenizer(

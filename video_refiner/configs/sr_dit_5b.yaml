@@ -51,7 +51,7 @@ dit_arch_config:
   use_window_attn: true           # enable window attention (generator only)
   window_block_hw: [4, 4]       # spatial query-block size (bh, bw)
   window_block_radius_hw: [3, 3]  # spatial neighborhood radius (rh, rw)
-  window_chunk: null              # null = one-shot; set to bound peak memory
+  window_chunk: 4                 # bounded default for SDPA/Windows memory safety
   stream_kv_len: 9                # latent frames of history kept in the streaming KV cache
   # Chunk-causal window for the PARALLEL forward, in latent frames. block_t =
   # stream_chunk_size (3); span = window_causal_kv_len + 3 = 12 frames, matching

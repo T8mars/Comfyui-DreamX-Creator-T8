@@ -1,0 +1,47 @@
+"""Static checks for the frontend-importable ComfyUI workflows."""
+
+import json
+from pathlib import Path
+
+import pytest
+
+
+REPO = Path(__file__).resolve().parents[1]
+WORKFLOWS = [
+    REPO / "examples" / "dreamx_creator_ui.json",
+    REPO / "examples" / "dreamx_refiner_ui.json",
+]
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda path: path.stem)
+def test_ui_workflow_link_integrity(path):
+    workflow = json.loads(path.read_text(encoding="utf-8"))
+    nodes = {node["id"]: node for node in workflow["nodes"]}
+    links = {link[0]: link for link in workflow["links"]}
+
+    assert workflow["version"] == pytest.approx(0.4)
+    assert workflow["last_node_id"] == max(nodes)
+    assert workflow["last_link_id"] == max(links)
+    assert len(links) == len(workflow["links"])
+
+    for link_id, (_, source_id, source_slot, target_id, target_slot, link_type) in links.items():
+        source = nodes[source_id]
+        target = nodes[target_id]
+        assert link_id in source["outputs"][source_slot]["links"]
+        assert target["inputs"][target_slot]["link"] == link_id
+        assert source["outputs"][source_slot]["type"] == link_type
+        assert target["inputs"][target_slot]["type"] == link_type
+
+
+def test_only_frontend_ui_workflows_are_shipped():
+    shipped = {path.name for path in (REPO / "examples").glob("*.json")}
+    assert shipped == {path.name for path in WORKFLOWS}
+
+
+def test_creator_wires_runtime_fps_into_video_container():
+    workflow = json.loads(WORKFLOWS[0].read_text(encoding="utf-8"))
+    nodes = {node["id"]: node for node in workflow["nodes"]}
+    first_frame = next(node for node in nodes.values() if node["type"] == "DreamXFirstFrameAVLatent")
+    create_video = next(node for node in nodes.values() if node["type"] == "CreateVideo")
+    fps_link = first_frame["outputs"][6]["links"][0]
+    assert create_video["inputs"][2]["link"] == fps_link

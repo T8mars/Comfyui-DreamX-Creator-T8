@@ -1,0 +1,21 @@
+# Repository and development-only content.
+.github/
+.reference/
+.pytest_cache/
+outputs/
+tests/
+scripts/render_demo.py
+
+# Standalone upstream entry points are retained on GitHub but are not needed by
+# the ComfyUI node package. Excluding them also keeps the Registry archive small.
+audio_video_generation/assets/
+audio_video_generation/inference.py
+audio_video_generation/inference_sp.py
+audio_video_generation/inference.sh
+audio_video_generation/inference_sp.sh
+audio_video_generation/README.md
+audio_video_generation/requirements.txt
+video_refiner/inference_sr.py
+video_refiner/run_inference.sh
+video_refiner/README.md
+video_refiner/requirements.txt

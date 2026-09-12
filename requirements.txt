@@ -1,0 +1,15 @@
+# ComfyUI supplies torch. Do not install or pin torch from this node package.
+diffusers>=0.37.1,<0.38
+transformers>=4.57,<5
+accelerate>=1.10
+safetensors>=0.6
+einops>=0.8
+omegaconf>=2.3
+sentencepiece>=0.2
+ftfy>=6.3
+tqdm>=4.67
+numpy>=1.26
+Pillow>=10
+peft>=0.17,<1
+regex>=2024.11
+typing_extensions>=4.12

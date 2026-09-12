@@ -188,7 +188,7 @@ parser.add_argument("--use_window_attn", action="store_true", default=False,
                     help="Swap the generator self-attention to mask-free causal block-grid window "
                          "attention (kv_len still applies). Block params come from the model config "
                          "unless explicitly overridden below.")
-parser.add_argument("--window_chunk", type=int, default=None,
+parser.add_argument("--window_chunk", type=int, default=4,
                     help="Process N windows per batch to bound peak memory (None = one-shot).")
 parser.add_argument("--window_block_hw", type=int, nargs=2, default=None,
                     help="Override the spatial query-block size (default: config value).")
@@ -445,7 +445,7 @@ logging.info("Pipeline: causal few-step (%s), steps=%s, teacher_forcing=%s",
 # ── Load checkpoint ──
 if args.checkpoint_path:
     logging.info("Loading checkpoint from %s", args.checkpoint_path)
-    state_dict = torch.load(args.checkpoint_path, map_location="cpu", weights_only=False)
+    state_dict = torch.load(args.checkpoint_path, map_location="cpu", weights_only=True)
     if isinstance(state_dict, dict) and "generator" in state_dict:
         gen_sd = state_dict["generator"]
     elif isinstance(state_dict, dict) and "generator_ema" in state_dict:
@@ -500,8 +500,9 @@ if args.lora_checkpoint_path:
         pipeline.generator.model, adapter_config, is_main_process=True)
 
     # Load LoRA weights
-    lora_checkpoint = torch.load(args.lora_checkpoint_path, map_location="cpu",
-                                 weights_only=False)
+    lora_checkpoint = torch.load(
+        args.lora_checkpoint_path, map_location="cpu", weights_only=True, mmap=True
+    )
     if isinstance(lora_checkpoint, dict) and "generator_lora" in lora_checkpoint:
         intended_sd = lora_checkpoint["generator_lora"]
     else:

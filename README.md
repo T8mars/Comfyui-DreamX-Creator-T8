@@ -13,10 +13,48 @@
 [![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Weights-yellow)](https://huggingface.co/GD-ML/DreamX-Creator)
 [![ModelScope](https://img.shields.io/badge/ModelScope-Weights-8A2BE2)](https://modelscope.cn/models/GD-ML/DreamX-Creator)
 [![License](https://img.shields.io/badge/License-Apache--2.0-green)](LICENSE)
+[![ComfyUI](https://img.shields.io/badge/ComfyUI-Native%20V3%20Nodes-5c35de)](https://github.com/T8mars/Comfyui-DreamX-Creator-T8)
 
 </div>
 
 -----
+
+## :art: ComfyUI Native Nodes by T8star
+
+This repository packages the released DreamX-Creator generator and causal 2x
+refiner as native ComfyUI V3 nodes. It provides frontend-importable workflows,
+native `MODEL`, `CLIP`, `VAE`, `LATENT`, `AUDIO`, `GUIDER`, and `VIDEO` types,
+ComfyUI model offloading, checkpoint verification, and a guarded Windows SDPA
+fallback for 24 GB GPUs.
+
+Install **DreamX Creator T8** from ComfyUI Manager, or install it manually:
+
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/T8mars/Comfyui-DreamX-Creator-T8.git
+cd Comfyui-DreamX-Creator-T8
+python -m pip install -r requirements.txt
+```
+
+Download the model weights separately, restart ComfyUI, then drag one of these
+frontend workflows onto the canvas:
+
+- [`examples/dreamx_creator_ui.json`](./examples/dreamx_creator_ui.json) — first-frame to synchronized video and audio.
+- [`examples/dreamx_refiner_ui.json`](./examples/dreamx_refiner_ui.json) — separate 2x refinement pass that preserves audio and FPS.
+
+See [`COMFYUI.md`](./COMFYUI.md) for the model layout, node graph, VRAM notes,
+and verification commands. Model weights are not bundled with the node package.
+
+## :link: T8star Links
+
+| Resource | Link |
+| --- | --- |
+| Bilibili | [T8star on Bilibili](https://space.bilibili.com/385085361) |
+| YouTube | [@T8star-Aix](https://www.youtube.com/@T8star-Aix/) |
+| Seedance API | [API signup](https://api.seedance.nz/sign-up?aff=5f4w) |
+| Online AI Apps | [RunningHub profile](https://www.runninghub.ai/zh-cn/user-center/1907375370302308353/userPost?inviteCode=rh-v1121) |
+| ComfyUI Package | [Quark download](https://pan.quark.cn/s/264edb7e36bd) |
+| Hugging Face | [huggingface.co/t8star](https://huggingface.co/t8star) |
 
 **DreamX-Creator 1.0** is a research framework for **native joint audio-video generation**. Given a first frame and a text prompt, its implemented base generator jointly models modality-specialized video and audio streams, using **Gated Cross-Modal Attention** and **Progressive Joint Training** to enable bidirectional audio-video interaction.
 
@@ -42,6 +80,7 @@ The broader system combines **Audio-Video Reinforcement Learning** with **Modali
 
 ## :open_file_folder: Repository Structure
 
+- [`COMFYUI.md`](./COMFYUI.md) — native ComfyUI V3 nodes, installation, workflows, and tests.
 - [`audio_video_generation/`](./audio_video_generation/) — 7B native joint audio-video generator (single GPU). See its [README](./audio_video_generation/README.md) for usage, input overrides, and memory options.
 - [`video_refiner/`](./video_refiner/) — Autoregressive 1-step 2K refiner (SR-DiT 5B). See its [README](./video_refiner/README.md) for usage and the full list of inference knobs.
 - [`checkpoints/`](./checkpoints/) — All model weights (not in the git repo). See its [README](./checkpoints/README.md) for the expected layout and download instructions.

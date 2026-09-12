@@ -337,7 +337,9 @@ class WanT5EncoderModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
                     from safetensors.torch import load_file
                     state_dict = load_file(pretrained_model_path)
                 else:
-                    state_dict = torch.load(pretrained_model_path, map_location="cpu")
+                    state_dict = torch.load(
+                        pretrained_model_path, map_location="cpu", weights_only=True
+                    )
 
                 if diffusers_version >= "0.33.0":
                     # Diffusers has refactored `load_model_dict_into_meta` since version 0.33.0 in this commit:
@@ -383,7 +385,9 @@ class WanT5EncoderModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
             from safetensors.torch import load_file, safe_open
             state_dict = load_file(pretrained_model_path)
         else:
-            state_dict = torch.load(pretrained_model_path, map_location="cpu")
+            state_dict = torch.load(
+                pretrained_model_path, map_location="cpu", weights_only=True
+            )
         m, u = model.load_state_dict(state_dict, strict=False)
         model = model.to(torch_dtype)
         return model

@@ -1,0 +1,242 @@
+{
+  "last_node_id": 16,
+  "last_link_id": 25,
+  "nodes": [
+    {
+      "id": 1, "type": "LoadImage", "pos": [0, 260], "size": [320, 310],
+      "flags": {}, "order": 0, "mode": 0,
+      "inputs": [{"name": "image", "type": "COMBO", "widget": {"name": "image"}, "link": null}],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [1]},
+        {"name": "MASK", "type": "MASK", "links": null}
+      ],
+      "properties": {"Node name for S&R": "LoadImage", "cnr_id": "comfy-core"},
+      "widgets_values": ["example.png", "image"]
+    },
+    {
+      "id": 2, "type": "DreamXBundleLoader", "pos": [0, -80], "size": [330, 130],
+      "flags": {}, "order": 1, "mode": 0,
+      "inputs": [
+        {"name": "model_root", "type": "STRING", "widget": {"name": "model_root"}, "link": null},
+        {"name": "dtype", "type": "COMBO", "widget": {"name": "dtype"}, "link": null}
+      ],
+      "outputs": [
+        {"name": "model", "type": "MODEL", "links": [7]},
+        {"name": "clip", "type": "CLIP", "links": [2, 3]},
+        {"name": "vae", "type": "VAE", "links": [6, 19]},
+        {"name": "audio_vae", "type": "DREAMX_AUDIO_VAE", "links": [20]}
+      ],
+      "properties": {"Node name for S&R": "DreamXBundleLoader"},
+      "widgets_values": ["auto", "bfloat16"],
+      "widgets_values_named": {"model_root": "auto", "dtype": "bfloat16"}
+    },
+    {
+      "id": 3, "type": "CLIPTextEncode", "pos": [390, -110], "size": [470, 210],
+      "flags": {}, "order": 2, "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 2},
+        {"name": "text", "type": "STRING", "widget": {"name": "text"}, "link": null}
+      ],
+      "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "links": [4]}],
+      "properties": {"Node name for S&R": "CLIPTextEncode", "cnr_id": "comfy-core"},
+      "widgets_values": ["A cinematic scene with natural motion, detailed lighting, synchronized environmental sound, high quality"]
+    },
+    {
+      "id": 4, "type": "CLIPTextEncode", "pos": [390, 140], "size": [470, 190],
+      "flags": {}, "order": 3, "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 3},
+        {"name": "text", "type": "STRING", "widget": {"name": "text"}, "link": null}
+      ],
+      "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "links": [5]}],
+      "properties": {"Node name for S&R": "CLIPTextEncode", "cnr_id": "comfy-core"},
+      "widgets_values": ["overexposed, static, blurry, subtitles, watermark, low quality, distorted, malformed"]
+    },
+    {
+      "id": 5, "type": "DreamXFirstFrameAVLatent", "pos": [930, 100], "size": [390, 300],
+      "flags": {}, "order": 4, "mode": 0,
+      "inputs": [
+        {"name": "positive", "type": "CONDITIONING", "link": 4},
+        {"name": "negative", "type": "CONDITIONING", "link": 5},
+        {"name": "vae", "type": "VAE", "link": 6},
+        {"name": "start_image", "type": "IMAGE", "link": 1},
+        {"name": "duration", "type": "FLOAT", "widget": {"name": "duration"}, "link": null},
+        {"name": "fps", "type": "FLOAT", "widget": {"name": "fps"}, "link": null},
+        {"name": "target_spatial_tokens", "type": "INT", "widget": {"name": "target_spatial_tokens"}, "link": null},
+        {"name": "batch_size", "type": "INT", "widget": {"name": "batch_size"}, "link": null}
+      ],
+      "outputs": [
+        {"name": "positive", "type": "CONDITIONING", "links": [9]},
+        {"name": "negative", "type": "CONDITIONING", "links": [10]},
+        {"name": "latent", "type": "LATENT", "links": [15]},
+        {"name": "width", "type": "INT", "links": null},
+        {"name": "height", "type": "INT", "links": null},
+        {"name": "frames", "type": "INT", "links": null},
+        {"name": "fps", "type": "FLOAT", "links": [24]}
+      ],
+      "properties": {"Node name for S&R": "DreamXFirstFrameAVLatent"},
+      "widgets_values": [5.0, 24.0, 880, 1],
+      "widgets_values_named": {"duration": 5.0, "fps": 24.0, "target_spatial_tokens": 880, "batch_size": 1}
+    },
+    {
+      "id": 6, "type": "DreamXAVSamplingPatch", "pos": [390, 410], "size": [330, 140],
+      "flags": {}, "order": 5, "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 7},
+        {"name": "video_shift", "type": "FLOAT", "widget": {"name": "video_shift"}, "link": null},
+        {"name": "audio_shift", "type": "FLOAT", "widget": {"name": "audio_shift"}, "link": null}
+      ],
+      "outputs": [{"name": "model", "type": "MODEL", "links": [8, 16]}],
+      "properties": {"Node name for S&R": "DreamXAVSamplingPatch"},
+      "widgets_values": [5.0, 5.0],
+      "widgets_values_named": {"video_shift": 5.0, "audio_shift": 5.0}
+    },
+    {
+      "id": 7, "type": "DreamXMultimodalGuider", "pos": [1390, -40], "size": [370, 260],
+      "flags": {}, "order": 6, "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 8},
+        {"name": "positive", "type": "CONDITIONING", "link": 9},
+        {"name": "negative", "type": "CONDITIONING", "link": 10},
+        {"name": "text_cfg", "type": "FLOAT", "widget": {"name": "text_cfg"}, "link": null},
+        {"name": "video_bridge", "type": "FLOAT", "widget": {"name": "video_bridge"}, "link": null},
+        {"name": "audio_bridge", "type": "FLOAT", "widget": {"name": "audio_bridge"}, "link": null},
+        {"name": "enable_a2v", "type": "BOOLEAN", "widget": {"name": "enable_a2v"}, "link": null},
+        {"name": "enable_v2a", "type": "BOOLEAN", "widget": {"name": "enable_v2a"}, "link": null}
+      ],
+      "outputs": [{"name": "guider", "type": "GUIDER", "links": [12]}],
+      "properties": {"Node name for S&R": "DreamXMultimodalGuider"},
+      "widgets_values": [5.0, 3.5, 3.5, true, true],
+      "widgets_values_named": {"text_cfg": 5.0, "video_bridge": 3.5, "audio_bridge": 3.5, "enable_a2v": true, "enable_v2a": true}
+    },
+    {
+      "id": 8, "type": "RandomNoise", "pos": [1390, 280], "size": [310, 100],
+      "flags": {}, "order": 7, "mode": 0,
+      "inputs": [{"name": "noise_seed", "type": "INT", "widget": {"name": "noise_seed"}, "link": null}],
+      "outputs": [{"name": "NOISE", "type": "NOISE", "links": [11]}],
+      "properties": {"Node name for S&R": "RandomNoise", "cnr_id": "comfy-core"},
+      "widgets_values": [20260912, "randomize"],
+      "widgets_values_named": {"noise_seed": 20260912}
+    },
+    {
+      "id": 9, "type": "KSamplerSelect", "pos": [1390, 430], "size": [310, 90],
+      "flags": {}, "order": 8, "mode": 0,
+      "inputs": [{"name": "sampler_name", "type": "COMBO", "widget": {"name": "sampler_name"}, "link": null}],
+      "outputs": [{"name": "SAMPLER", "type": "SAMPLER", "links": [13]}],
+      "properties": {"Node name for S&R": "KSamplerSelect", "cnr_id": "comfy-core"},
+      "widgets_values": ["euler"], "widgets_values_named": {"sampler_name": "euler"}
+    },
+    {
+      "id": 10, "type": "BasicScheduler", "pos": [820, 470], "size": [390, 160],
+      "flags": {}, "order": 9, "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 16},
+        {"name": "scheduler", "type": "COMBO", "widget": {"name": "scheduler"}, "link": null},
+        {"name": "steps", "type": "INT", "widget": {"name": "steps"}, "link": null},
+        {"name": "denoise", "type": "FLOAT", "widget": {"name": "denoise"}, "link": null}
+      ],
+      "outputs": [{"name": "SIGMAS", "type": "SIGMAS", "links": [14]}],
+      "properties": {"Node name for S&R": "BasicScheduler", "cnr_id": "comfy-core"},
+      "widgets_values": ["simple", 20, 1.0],
+      "widgets_values_named": {"scheduler": "simple", "steps": 20, "denoise": 1.0}
+    },
+    {
+      "id": 11, "type": "SamplerCustomAdvanced", "pos": [1830, 180], "size": [320, 280],
+      "flags": {}, "order": 10, "mode": 0,
+      "inputs": [
+        {"name": "noise", "type": "NOISE", "link": 11},
+        {"name": "guider", "type": "GUIDER", "link": 12},
+        {"name": "sampler", "type": "SAMPLER", "link": 13},
+        {"name": "sigmas", "type": "SIGMAS", "link": 14},
+        {"name": "latent_image", "type": "LATENT", "link": 15}
+      ],
+      "outputs": [
+        {"name": "output", "type": "LATENT", "links": null},
+        {"name": "denoised_output", "type": "LATENT", "links": [17]}
+      ],
+      "properties": {"Node name for S&R": "SamplerCustomAdvanced", "cnr_id": "comfy-core"}
+    },
+    {
+      "id": 12, "type": "DreamXSplitAVLatent", "pos": [2230, 220], "size": [310, 110],
+      "flags": {}, "order": 11, "mode": 0,
+      "inputs": [{"name": "latent", "type": "LATENT", "link": 17}],
+      "outputs": [
+        {"name": "video_latent", "type": "LATENT", "links": [18]},
+        {"name": "audio_latent", "type": "LATENT", "links": [21]}
+      ],
+      "properties": {"Node name for S&R": "DreamXSplitAVLatent"}
+    },
+    {
+      "id": 13, "type": "VAEDecode", "pos": [2630, 80], "size": [300, 110],
+      "flags": {}, "order": 12, "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 18},
+        {"name": "vae", "type": "VAE", "link": 19}
+      ],
+      "outputs": [{"name": "IMAGE", "type": "IMAGE", "links": [22]}],
+      "properties": {"Node name for S&R": "VAEDecode", "cnr_id": "comfy-core"}
+    },
+    {
+      "id": 14, "type": "DreamXAudioVAEDecode", "pos": [2630, 300], "size": [320, 110],
+      "flags": {}, "order": 13, "mode": 0,
+      "inputs": [
+        {"name": "audio_vae", "type": "DREAMX_AUDIO_VAE", "link": 20},
+        {"name": "audio_latent", "type": "LATENT", "link": 21}
+      ],
+      "outputs": [{"name": "audio", "type": "AUDIO", "links": [23]}],
+      "properties": {"Node name for S&R": "DreamXAudioVAEDecode"}
+    },
+    {
+      "id": 15, "type": "CreateVideo", "pos": [3060, 160], "size": [320, 190],
+      "flags": {}, "order": 14, "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 22},
+        {"name": "audio", "type": "AUDIO", "shape": 7, "link": 23},
+        {"name": "fps", "type": "FLOAT", "widget": {"name": "fps"}, "link": 24},
+        {"name": "bit_depth", "type": "COMBO", "widget": {"name": "bit_depth"}, "link": null},
+        {"name": "color_space", "type": "COMBO", "widget": {"name": "color_space"}, "link": null}
+      ],
+      "outputs": [{"name": "VIDEO", "type": "VIDEO", "links": [25]}],
+      "properties": {"Node name for S&R": "CreateVideo", "cnr_id": "comfy-core"},
+      "widgets_values": [24.0, 8, "sRGB"],
+      "widgets_values_named": {"fps": 24.0, "bit_depth": 8, "color_space": "sRGB"}
+    },
+    {
+      "id": 16, "type": "SaveVideo", "pos": [3460, 170], "size": [360, 180],
+      "flags": {}, "order": 15, "mode": 0,
+      "inputs": [
+        {"name": "video", "type": "VIDEO", "link": 25},
+        {"name": "filename_prefix", "type": "STRING", "widget": {"name": "filename_prefix"}, "link": null},
+        {"name": "format", "type": "COMFY_DYNAMICCOMBO_V3", "widget": {"name": "format"}, "link": null}
+      ],
+      "outputs": [{"name": "video", "type": "VIDEO", "links": null}],
+      "properties": {"Node name for S&R": "SaveVideo", "cnr_id": "comfy-core"},
+      "widgets_values": ["video/DreamX-Creator", {"format": "mp4", "codec": {"codec": "h264"}}],
+      "widgets_values_named": {"filename_prefix": "video/DreamX-Creator", "format": {"format": "mp4", "codec": {"codec": "h264"}}}
+    }
+  ],
+  "links": [
+    [1, 1, 0, 5, 3, "IMAGE"], [2, 2, 1, 3, 0, "CLIP"],
+    [3, 2, 1, 4, 0, "CLIP"], [4, 3, 0, 5, 0, "CONDITIONING"],
+    [5, 4, 0, 5, 1, "CONDITIONING"], [6, 2, 2, 5, 2, "VAE"],
+    [7, 2, 0, 6, 0, "MODEL"], [8, 6, 0, 7, 0, "MODEL"],
+    [9, 5, 0, 7, 1, "CONDITIONING"], [10, 5, 1, 7, 2, "CONDITIONING"],
+    [11, 8, 0, 11, 0, "NOISE"], [12, 7, 0, 11, 1, "GUIDER"],
+    [13, 9, 0, 11, 2, "SAMPLER"], [14, 10, 0, 11, 3, "SIGMAS"],
+    [15, 5, 2, 11, 4, "LATENT"], [16, 6, 0, 10, 0, "MODEL"],
+    [17, 11, 1, 12, 0, "LATENT"], [18, 12, 0, 13, 0, "LATENT"],
+    [19, 2, 2, 13, 1, "VAE"], [20, 2, 3, 14, 0, "DREAMX_AUDIO_VAE"],
+    [21, 12, 1, 14, 1, "LATENT"], [22, 13, 0, 15, 0, "IMAGE"],
+    [23, 14, 0, 15, 1, "AUDIO"], [24, 5, 6, 15, 2, "FLOAT"],
+    [25, 15, 0, 16, 0, "VIDEO"]
+  ],
+  "groups": [
+    {"id": 1, "title": "1 · Load models and encode prompts", "bounding": [-30, -150, 920, 510], "color": "#3f789e", "font_size": 24},
+    {"id": 2, "title": "2 · Build synchronized A/V latent", "bounding": [890, 40, 470, 400], "color": "#3f9e62", "font_size": 24},
+    {"id": 3, "title": "3 · Native ComfyUI sampling", "bounding": [1350, -100, 840, 700], "color": "#8b5ca6", "font_size": 24},
+    {"id": 4, "title": "4 · Decode and save video", "bounding": [2190, 10, 1660, 480], "color": "#a67d3f", "font_size": 24}
+  ],
+  "config": {},
+  "extra": {"ds": {"scale": 0.72, "offset": [40, 250]}},
+  "version": 0.4
+}

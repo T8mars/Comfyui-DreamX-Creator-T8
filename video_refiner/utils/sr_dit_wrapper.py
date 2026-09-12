@@ -20,8 +20,8 @@ from typing import List, Optional
 import torch
 import torch.nn as nn
 
-from utils.scheduler import SchedulerInterface, FlowMatchScheduler
-from wan.modules.sr_dit.models import Transformer3DModel
+from .scheduler import SchedulerInterface, FlowMatchScheduler
+from ..wan.modules.sr_dit.models import Transformer3DModel
 
 
 class WanVAEWrapper22(nn.Module):
@@ -51,7 +51,7 @@ class WanVAEWrapper22(nn.Module):
 
     def __init__(self, vae_pth: str):
         super().__init__()
-        from wan.modules.vae2_2 import _video_vae
+        from ..wan.modules.vae2_2 import _video_vae
         self.mean = torch.tensor(self.MEAN, dtype=torch.float32)
         self.std = torch.tensor(self.STD, dtype=torch.float32)
         self.z_dim = 48
@@ -175,7 +175,7 @@ def resolve_nu_lightvae_dims(ckpt_path: str,
     graph.
     """
     pkg = load_lightvae_nu(module_path)
-    ckpt = torch.load(ckpt_path, map_location="cpu", mmap=True)
+    ckpt = torch.load(ckpt_path, map_location="cpu", mmap=True, weights_only=True)
     weights = ckpt.get("ema")
     if weights is None:
         raise ValueError(f"{ckpt_path} has no 'ema' key (keys: {list(ckpt)[:8]})")
@@ -251,7 +251,7 @@ class NULightVAEWrapper22(nn.Module):
         self.std = torch.tensor(self.STD, dtype=torch.float32)
         self.z_dim = 48
 
-        ckpt = torch.load(ckpt_path, map_location="cpu", mmap=True)
+        ckpt = torch.load(ckpt_path, map_location="cpu", mmap=True, weights_only=True)
         # `ema`, NOT `student`: both keys are present and the EMA weights are
         # the released ones.
         weights = ckpt["ema"]
@@ -361,7 +361,7 @@ def _load_dit_state_dict(checkpoint_path: str) -> dict:
         print(f"[SRDiT] Loaded safetensors checkpoint: {path}")
         return sd
 
-    ckpt = torch.load(str(path), map_location="cpu", weights_only=False)
+    ckpt = torch.load(str(path), map_location="cpu", weights_only=True, mmap=True)
     weight_keys = ["model", "generator", "generator_ema", "state_dict", "model_state_dict"]
     for key in weight_keys:
         if isinstance(ckpt, dict) and key in ckpt and isinstance(ckpt[key], dict):

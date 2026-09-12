@@ -798,7 +798,9 @@ class WanTransformer3DModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
 
                 param_device = "cpu"
                 if os.path.exists(model_file):
-                    state_dict = torch.load(model_file, map_location="cpu")
+                    state_dict = torch.load(
+                        model_file, map_location="cpu", weights_only=True
+                    )
                 elif os.path.exists(model_file_safetensors):
                     from safetensors.torch import load_file, safe_open
                     state_dict = load_file(model_file_safetensors)
@@ -899,7 +901,7 @@ class WanTransformer3DModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
 
         model = cls.from_config(config, **transformer_additional_kwargs)
         if os.path.exists(model_file):
-            state_dict = torch.load(model_file, map_location="cpu")
+            state_dict = torch.load(model_file, map_location="cpu", weights_only=True)
         elif os.path.exists(model_file_safetensors):
             from safetensors.torch import load_file, safe_open
             state_dict = load_file(model_file_safetensors)

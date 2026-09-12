@@ -5,9 +5,9 @@ import time
 import torch
 import torch.nn.functional as F
 
-from utils.sr_dit_wrapper import SRDiTWrapper, WanVAEWrapper22
-from utils.wan_wrapper import WanTextEncoder, WanVAEWrapper
-from wan.modules.sr_dit.attention import prewarm_blockgrid_triton
+from ..utils.sr_dit_wrapper import SRDiTWrapper, WanVAEWrapper22
+from ..utils.wan_wrapper import WanTextEncoder, WanVAEWrapper
+from ..wan.modules.sr_dit.attention import prewarm_blockgrid_triton
 
 import tqdm
 
@@ -246,8 +246,8 @@ class CausalInferencePipeline(torch.nn.Module):
                 # Distilled LightVAE-NU student (decode-only). Same Wan2.2
                 # latent space; the decoder dominates end-to-end time at high
                 # resolutions, so this is the largest lever on wall clock.
-                from utils.sr_dit_wrapper import (NULightVAEWrapper22,
-                                                 DEFAULT_NU_LIGHTVAE_MODULE)
+                from ..utils.sr_dit_wrapper import (NULightVAEWrapper22,
+                                                   DEFAULT_NU_LIGHTVAE_MODULE)
                 self.vae = NULightVAEWrapper22(
                     ckpt_path=getattr(args, "nu_lightvae_ckpt", None),
                     module_path=(getattr(args, "nu_lightvae_module_path", None)
@@ -597,7 +597,7 @@ class CausalInferencePipeline(torch.nn.Module):
 
         Returns the shapes warmed ([] on a bf16 run).
         """
-        from wan.modules.sr_dit.fp8_linear import (
+        from ..wan.modules.sr_dit.fp8_linear import (
             Fp8Linear, prewarm_quantizer, quantizer_shapes)
         model = self.generator.model
         if not any(isinstance(m, Fp8Linear) for m in model.modules()):
@@ -651,6 +651,7 @@ class CausalInferencePipeline(torch.nn.Module):
         anchor_window_scope: str = "window",
         native_lq_anchor: bool = False,
         native_anchor_scheme: str = "repeat",
+        progress_callback=None,
     ) -> torch.Tensor:
         batch_size, num_frames, num_channels, height, width = noise.shape
         _mark = self.stage_timer.tick()
@@ -974,6 +975,8 @@ class CausalInferencePipeline(torch.nn.Module):
 
             current_start_frame += current_num_frames
             temporal_offset += current_num_frames
+            if progress_callback is not None:
+                progress_callback(block_index + 1, len(all_num_frames))
 
         # `dit` = the denoise loop only, so the window backend and fp8 have one
         # number they alone move.

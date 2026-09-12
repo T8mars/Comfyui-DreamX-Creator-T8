@@ -1,0 +1,26 @@
+{
+  "source": "GD-ML/DreamX-Creator",
+  "algorithm": "sha256",
+  "files": [
+    {"path": "audio_vae/config.json", "size": 471, "sha256": "2414c27e35b495ba173db9d72318aad5e397d76170d53f67f30ab2d504743e0a"},
+    {"path": "audio_vae/diffusion_pytorch_model.safetensors", "size": 743102794, "sha256": "746e753316a1fa1dd600b73273137f5e5eb29758dd533e1161bf4d681ee46710"},
+    {"path": "creator/cross_attn_weights.safetensors", "size": 2556452768, "sha256": "10afcb8cd79a928f0b283227d7eb7334189ae3baad5fd9b6dc272b9de51431ba"},
+    {"path": "creator/merged_lora_info.json", "size": 427, "sha256": "f69b062b3231717fc18ffd66f1e20ac8579ba5ac8789cf7499b2d35500d5a644"},
+    {"path": "creator/audio_model/config.json", "size": 691, "sha256": "d85594f1304ceec5ff41e81226ddffe91878bdf43473b5a7b3bf6ea8d8c6ec43"},
+    {"path": "creator/audio_model/diffusion_pytorch_model.safetensors", "size": 5676857112, "sha256": "cba99bf92735f8048b77b96b48bc17404ddca1e37603af6a4892b6e8f0bf8554"},
+    {"path": "creator/video_model/config.json", "size": 786, "sha256": "08aa143606d38a1d80522fdb509f46c8fe9197e5cca890a6339b8d748768d22e"},
+    {"path": "creator/video_model/diffusion_pytorch_model-00001-of-00002.safetensors", "size": 10658247312, "sha256": "57354d1836814c41b791357fb021d47ab2ef479b02935fbe4a452eb839946c8c"},
+    {"path": "creator/video_model/diffusion_pytorch_model-00002-of-00002.safetensors", "size": 9340987096, "sha256": "1ad2a7404e4284ab8e159b26245489d224d0c4bd404e0e5b07b1d7b40b83ee45"},
+    {"path": "creator/video_model/diffusion_pytorch_model.safetensors.index.json", "size": 72864, "sha256": "1e8ceba930bb0a6cb93d4de8341a7a2039823ebe30b80947fd2034fb08afc5c6"},
+    {"path": "refiner/latent_upsampler_2d_causal.pt", "size": 463683163, "sha256": "ae2e6db0f6cd715794f601e38c7bb7448ecc3678ff70291d9d92f4c043a4255a"},
+    {"path": "refiner/latent_upsampler_flash.pt", "size": 20014099, "sha256": "daf3ec014b54bcd43e797d4e9c47771aa7206d68ec18c9ada6330e0de9342f6d"},
+    {"path": "refiner/lightvae_nu_scheme3.pt", "size": 590511261, "sha256": "e569186000ece05f153e06114ffc29108db7fbace510b24d9dd0c3b5258814e1"},
+    {"path": "refiner/sr_dit_5b.pt", "size": 9999839408, "sha256": "87787d48e132e1bc8cd7dbbd28d40f00c56fc3b4abe7e28620c731047c198691"},
+    {"path": "wan2.2_ti2v_5b/models_t5_umt5-xxl-enc-bf16.pth", "size": 11361920418, "sha256": "7cace0da2b446bbbbc57d031ab6cf163a3d59b366da94e5afe36745b746fd81d"},
+    {"path": "wan2.2_ti2v_5b/Wan2.2_VAE.pth", "size": 2818839170, "sha256": "20eb789667fa5e60e7516bf509512f6cb61f01b0aa0695eadaea930c13892b36"},
+    {"path": "wan2.2_ti2v_5b/google/umt5-xxl/special_tokens_map.json", "size": 6623, "sha256": "7b8a9f5040adb67b5805abdfd42c1f8d0f3d0e711f10726580eb3789cd0ad61d"},
+    {"path": "wan2.2_ti2v_5b/google/umt5-xxl/spiece.model", "size": 4548313, "sha256": "e3909a67b780650b35cf529ac782ad2b6b26e6d1f849d3fbb6a872905f452458"},
+    {"path": "wan2.2_ti2v_5b/google/umt5-xxl/tokenizer_config.json", "size": 61728, "sha256": "ed9a3a8b0faa71a70a32847e0435fe036e6e112d4df4edb7bb48a921e344dc05"},
+    {"path": "wan2.2_ti2v_5b/google/umt5-xxl/tokenizer.json", "size": 16837417, "sha256": "6e197b4d3dbd71da14b4eb255f4fa91c9c1f2068b20a2de2472967ca3d22602b"}
+  ]
+}

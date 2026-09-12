@@ -4,7 +4,7 @@ from pathlib import Path
 
 import torch
 
-from videox_fun.models.creator.dac_vae import DAC, DiagonalGaussianDistribution
+from .creator.dac_vae import DAC, DiagonalGaussianDistribution
 
 
 class CreatorDACVAE(torch.nn.Module):

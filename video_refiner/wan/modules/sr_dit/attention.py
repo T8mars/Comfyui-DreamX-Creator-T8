@@ -76,15 +76,28 @@ def flash_attention(
     """Unified wrapper that dispatches to FlashAttention v3, v2, or PyTorch SDPA."""
     half_dtypes = (torch.float16, torch.bfloat16)
     assert dtype in half_dtypes
-    if q.device.type != 'cuda' or q.size(-1) > 256:
+    if (q.device.type != 'cuda' or q.size(-1) > 256
+            or not (FLASH_ATTN_2_AVAILABLE or FLASH_ATTN_3_AVAILABLE)):
         # Fallback to PyTorch SDPA when FlashAttention constraints are not met.
+        out_dtype = q.dtype
+        if q_scale is not None:
+            q = q * q_scale
         q = q.transpose(1, 2).to(dtype)
         k = k.transpose(1, 2).to(dtype)
         v = v.transpose(1, 2).to(dtype)
+        attn_mask = None
+        if k_lens is not None:
+            valid = torch.arange(k.shape[-2], device=k.device)[None, :] < k_lens[:, None]
+            attn_mask = valid[:, None, None, :]
         out = torch.nn.functional.scaled_dot_product_attention(
-            q, k, v, attn_mask=None, is_causal=causal, dropout_p=dropout_p
+            q, k, v, attn_mask=attn_mask, is_causal=causal,
+            dropout_p=dropout_p, scale=softmax_scale,
         )
-        return out.transpose(1, 2).contiguous()
+        out = out.transpose(1, 2).contiguous()
+        if q_lens is not None:
+            valid_q = torch.arange(out.shape[1], device=out.device)[None, :] < q_lens[:, None]
+            out = out * valid_q[:, :, None, None]
+        return out.to(out_dtype)
 
     # params
     b, lq, lk, out_dtype = q.size(0), q.size(1), k.size(1), q.dtype

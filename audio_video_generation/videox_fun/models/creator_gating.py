@@ -1257,7 +1257,9 @@ class WanCreatorGatingAVModel(nn.Module):
                 cross_attn_state = load_file(cross_attn_file)
                 logging.info("Loading cross-attn weights from: %s (%d keys)", cross_attn_file, len(cross_attn_state))
             elif os.path.exists(cross_attn_file_bin):
-                cross_attn_state = torch.load(cross_attn_file_bin, map_location="cpu")
+                cross_attn_state = torch.load(
+                    cross_attn_file_bin, map_location="cpu", weights_only=True
+                )
                 logging.info("Loading cross-attn weights from: %s (%d keys)", cross_attn_file_bin, len(cross_attn_state))
             else:
                 cross_attn_state = None

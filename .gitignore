@@ -6,6 +6,9 @@ outputs/
 video_refiner/outputs/
 # Local CLI state.
 .qoder/
+.reference/
 # Python.
 __pycache__/
 *.pyc
+# Local artifact created by `comfy node pack`.
+node.zip
