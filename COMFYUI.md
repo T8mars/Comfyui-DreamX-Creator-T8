@@ -17,6 +17,19 @@ The requirements intentionally do not install or replace PyTorch. Restart ComfyU
 after installation. The loader's `model_root=auto` searches, in order, the
 repository's `checkpoints/` and `ComfyUI/models/dreamx_creator/`.
 
+Download the complete ComfyUI-ready model bundle from
+[t8star/DreamX-Creator-Comfy](https://huggingface.co/t8star/DreamX-Creator-Comfy)
+directly into the recommended shared directory:
+
+```powershell
+hf download t8star/DreamX-Creator-Comfy --local-dir ComfyUI/models/dreamx_creator
+```
+
+The bundle is approximately 54.25 GB (50.53 GiB). Its root must directly contain
+`creator/`, `audio_vae/`, `refiner/`, and `wan2.2_ti2v_5b/`; do not add another
+nested `DreamX-Creator-Comfy/` directory between the selected model root and these
+four folders.
+
 Validate a downloaded model tree before loading 50+ GB of weights:
 
 ```powershell

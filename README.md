@@ -10,7 +10,8 @@
 <div align="center">
 
 [![arXiv](https://img.shields.io/badge/arXiv-2608.31106-b31b1b.svg)](https://arxiv.org/abs/2608.31106)
-[![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Weights-yellow)](https://huggingface.co/GD-ML/DreamX-Creator)
+[![ComfyUI Weights](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-ComfyUI%20Weights-yellow)](https://huggingface.co/t8star/DreamX-Creator-Comfy)
+[![Upstream Weights](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Upstream%20Weights-f3d34a)](https://huggingface.co/GD-ML/DreamX-Creator)
 [![ModelScope](https://img.shields.io/badge/ModelScope-Weights-8A2BE2)](https://modelscope.cn/models/GD-ML/DreamX-Creator)
 [![License](https://img.shields.io/badge/License-Apache--2.0-green)](LICENSE)
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Native%20V3%20Nodes-5c35de)](https://github.com/T8mars/Comfyui-DreamX-Creator-T8)
@@ -81,7 +82,8 @@ and verification commands. Model weights are not bundled with the node package.
 | Seedance API | [API signup](https://api.seedance.nz/sign-up?aff=5f4w) |
 | Online AI Apps | [RunningHub profile](https://www.runninghub.ai/zh-cn/user-center/1907375370302308353/userPost?inviteCode=rh-v1121) |
 | ComfyUI Package | [Quark download](https://pan.quark.cn/s/264edb7e36bd) |
-| Hugging Face | [huggingface.co/t8star](https://huggingface.co/t8star) |
+| ComfyUI Model Weights | [t8star/DreamX-Creator-Comfy](https://huggingface.co/t8star/DreamX-Creator-Comfy) |
+| Hugging Face Profile | [huggingface.co/t8star](https://huggingface.co/t8star) |
 
 **DreamX-Creator 1.0** is a research framework for **native joint audio-video generation**. Given a first frame and a text prompt, its implemented base generator jointly models modality-specialized video and audio streams, using **Gated Cross-Modal Attention** and **Progressive Joint Training** to enable bidirectional audio-video interaction.
 
@@ -114,12 +116,25 @@ The broader system combines **Audio-Video Reinforcement Learning** with **Modali
 
 ## :package: Model Weights
 
-Model weights are distributed on [HuggingFace](https://huggingface.co/GD-ML/DreamX-Creator)
-and [ModelScope](https://modelscope.cn/models/GD-ML/DreamX-Creator) and should
-be placed under `checkpoints/` (details in [`checkpoints/README.md`](./checkpoints/README.md)):
+Download the complete ComfyUI-ready bundle from
+[t8star/DreamX-Creator-Comfy](https://huggingface.co/t8star/DreamX-Creator-Comfy).
+It contains 20 required model/config/tokenizer files and is approximately
+54.25 GB (50.53 GiB). The original weights are from
+[GD-ML/DreamX-Creator](https://huggingface.co/GD-ML/DreamX-Creator) and
+[ModelScope](https://modelscope.cn/models/GD-ML/DreamX-Creator).
+
+Recommended shared-model installation:
+
+```bash
+hf download t8star/DreamX-Creator-Comfy --local-dir ComfyUI/models/dreamx_creator
+```
+
+With `model_root=auto`, the loader searches the node-local `checkpoints/` directory
+first and then `ComfyUI/models/dreamx_creator/`. The shared directory must have this
+structure (details in [`checkpoints/README.md`](./checkpoints/README.md)):
 
 ```
-checkpoints/
+ComfyUI/models/dreamx_creator/
 ├── creator/                     # DreamX-Creator 1.0 joint generator (7B, LoRA merged)
 │   ├── video_model/             # video DiT shards + config
 │   ├── audio_model/             # audio DiT + config

@@ -1,91 +1,119 @@
+---
+license: apache-2.0
+pipeline_tag: image-to-video
+tags:
+  - comfyui
+  - video
+  - audio
+  - image-to-video
+  - video-upscaling
+  - dreamx-creator
+---
+
 <div align="center">
-  <img src="./dreamx-creator_teaser.png" alt="DreamX-Creator teaser">
-
-  <h1>DreamX-Creator 1.0: Model Weights</h1>
-
-  DreamX Team
-
+  <h1>DreamX Creator Comfy</h1>
+  <p>ComfyUI-ready DreamX-Creator generator, Audio VAE, Wan dependencies, and causal 2× refiner weights.</p>
 </div>
 
-<div align="center">
+## Links
 
-[![arXiv](https://img.shields.io/badge/arXiv-2608.31106-b31b1b.svg)](https://arxiv.org/abs/2608.31106)
-[![License](https://img.shields.io/badge/License-Apache--2.0-green)](../LICENSE)
+- **ComfyUI nodes and frontend workflows:** [T8mars/Comfyui-DreamX-Creator-T8](https://github.com/T8mars/Comfyui-DreamX-Creator-T8)
+- **ComfyUI Registry:** [dreamx-creator-t8](https://registry.comfy.org/nodes/dreamx-creator-t8)
+- **Original project and model source:** [AMAP-ML/DreamX-Creator](https://github.com/AMAP-ML/DreamX-Creator) · [GD-ML/DreamX-Creator](https://huggingface.co/GD-ML/DreamX-Creator)
 
-</div>
+## Install for ComfyUI
 
------
-
-This directory holds all model weights for **DreamX-Creator 1.0**, a research
-framework for **native joint audio-video generation**. Given a first frame and
-a text prompt, the 7B base generator jointly models modality-specialized video
-and audio streams; the **Autoregressive 1-Step 2K Refiner** (SR-DiT 5B) then
-upgrades the generated video to high-quality 2K output.
-
-Weights are **not stored in the git repository**. They are distributed on
-[HuggingFace](https://huggingface.co/GD-ML/DreamX-Creator) and
-[ModelScope](https://modelscope.cn/models/GD-ML/DreamX-Creator) and should be
-placed under this directory following the layout below.
-
-## Expected Layout
-
-```
-checkpoints/
-├── creator/                     # DreamX-Creator 1.0 joint generator (7B, LoRA merged)
-│   ├── video_model/             # video DiT shards + config
-│   ├── audio_model/             # audio DiT + config
-│   └── cross_attn_weights.safetensors  # gated A2V/V2A cross-modal attention
-├── audio_vae/                   # CreatorDACVAE audio VAE
-├── refiner/                     # 2K refiner
-│   ├── sr_dit_5b.pt             # SR-DiT 5B refiner
-│   ├── latent_upsampler_flash.pt       # FlashLatentUpsampler (default)
-│   ├── latent_upsampler_2d_causal.pt   # causal 2D latent upsampler (optional)
-│   └── lightvae_nu_scheme3.pt          # distilled fast decoder (optional, off by default)
-└── wan2.2_ti2v_5b/              # shared Wan2.2-TI2V-5B dependencies
-    ├── Wan2.2_VAE.pth           # video VAE
-    ├── models_t5_umt5-xxl-enc-bf16.pth  # UMT5-xxl text encoder
-    └── google/umt5-xxl/         # tokenizer
-```
-
-The `wan2.2_ti2v_5b/` directory can also be downloaded directly from
-[Wan-AI/Wan2.2-TI2V-5B](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B); only the
-three entries above are needed. It is shared by both pipelines.
-
-## Which Weights Are Used Where
-
-- **Joint audio-video generation** uses `creator/`, `audio_vae/`, and
-  `wan2.2_ti2v_5b/`. See the
-  [audio_video_generation README](../audio_video_generation/README.md) for
-  setup, input overrides, and memory options.
-- **2K refinement** uses `refiner/` and `wan2.2_ti2v_5b/`. See the
-  [video_refiner README](../video_refiner/README.md) for setup and the full
-  list of inference knobs.
-
-## Quickstart
-
-Once the weights above are in place, from the repository root:
-
-**1. Joint audio-video generation** (first frame + prompt to synchronized
-video with audio):
+Install the `hf` command if needed:
 
 ```bash
-cd audio_video_generation
-pip install -r requirements.txt
-./inference.sh                        # runs the default Verse-Bench case (case1)
+python -m pip install -U huggingface_hub
 ```
 
-**2. 2K refinement** (super-resolve a generated or external video, audio
-unchanged):
+Download this repository directly into ComfyUI's shared model directory:
 
 ```bash
-cd ../video_refiner
-pip install -r requirements.txt
-INPUT=/path/to/video.mp4 bash run_inference.sh
+hf download t8star/DreamX-Creator-Comfy --local-dir ComfyUI/models/dreamx_creator
 ```
 
-## Citation
+The resulting model root must be:
 
-If you find DreamX-Creator useful in your research, please consider citing our technical report:
+```text
+ComfyUI/
+└── models/
+    └── dreamx_creator/          # select model_root=auto in the loader
+        ├── creator/
+        │   ├── cross_attn_weights.safetensors
+        │   ├── merged_lora_info.json
+        │   ├── audio_model/
+        │   │   ├── config.json
+        │   │   └── diffusion_pytorch_model.safetensors
+        │   └── video_model/
+        │       ├── config.json
+        │       ├── diffusion_pytorch_model-00001-of-00002.safetensors
+        │       ├── diffusion_pytorch_model-00002-of-00002.safetensors
+        │       └── diffusion_pytorch_model.safetensors.index.json
+        ├── audio_vae/
+        │   ├── config.json
+        │   └── diffusion_pytorch_model.safetensors
+        ├── refiner/
+        │   ├── sr_dit_5b.pt
+        │   ├── latent_upsampler_flash.pt
+        │   ├── latent_upsampler_2d_causal.pt
+        │   └── lightvae_nu_scheme3.pt
+        └── wan2.2_ti2v_5b/
+            ├── Wan2.2_VAE.pth
+            ├── models_t5_umt5-xxl-enc-bf16.pth
+            └── google/
+                └── umt5-xxl/
+                    ├── special_tokens_map.json
+                    ├── spiece.model
+                    ├── tokenizer_config.json
+                    └── tokenizer.json
+```
+
+`model_root=auto` searches the custom-node repository's `checkpoints/` first,
+then `ComfyUI/models/dreamx_creator/`. Therefore this node-local layout also works:
+
+```bash
+hf download t8star/DreamX-Creator-Comfy --local-dir ComfyUI/custom_nodes/Comfyui-DreamX-Creator-T8/checkpoints
+```
+
+The complete bundle contains 20 model/config/tokenizer files and is approximately
+54.25 GB (50.53 GiB). Validate the download before loading the models:
+
+```bash
+python ComfyUI/custom_nodes/Comfyui-DreamX-Creator-T8/scripts/verify_models.py ComfyUI/models/dreamx_creator
+```
+
+## Components
+
+| Directory | Used by | Contents |
+| --- | --- | --- |
+| `creator/` | Creator workflow | 7B joint video/audio DiTs and cross-modal attention |
+| `audio_vae/` | Creator workflow | CreatorDACVAE audio decoder |
+| `refiner/` | Refiner workflow | SR-DiT 5B and latent upsamplers |
+| `wan2.2_ti2v_5b/` | Both workflows | Wan VAE, UMT5-XXL encoder, and tokenizer |
+
+The Creator and Refiner are intended to run as separate ComfyUI workflow phases
+so both large models do not remain resident on the GPU at the same time.
+
+## T8star social links
+
+| Resource | Link |
+| --- | --- |
+| Bilibili | [T8star on Bilibili](https://space.bilibili.com/385085361) |
+| YouTube | [@T8star-Aix](https://www.youtube.com/@T8star-Aix/) |
+| Seedance API | [API signup](https://api.seedance.nz/sign-up?aff=5f4w) |
+| Online AI Apps | [RunningHub profile](https://www.runninghub.ai/zh-cn/user-center/1907375370302308353/userPost?inviteCode=rh-v1121) |
+| ComfyUI Package | [Quark download](https://pan.quark.cn/s/264edb7e36bd) |
+| Hugging Face profile | [huggingface.co/t8star](https://huggingface.co/t8star) |
+
+## Attribution and license
+
+These files are organized for the native ComfyUI nodes from the weights released
+by the DreamX Team at [GD-ML/DreamX-Creator](https://huggingface.co/GD-ML/DreamX-Creator).
+The project is licensed under Apache License 2.0. See the `LICENSE` file in this
+repository. Please retain the original attribution when redistributing the weights.
 
 ```bibtex
 @misc{zhu2026dreamxcreatordemocratizingnativeaudiovideo,
@@ -95,14 +123,6 @@ If you find DreamX-Creator useful in your research, please consider citing our t
   eprint={2608.31106},
   archivePrefix={arXiv},
   primaryClass={cs.CV},
-  url={https://arxiv.org/abs/2608.31106},
+  url={https://arxiv.org/abs/2608.31106}
 }
 ```
-
-## License
-
-This project is licensed under the Apache License 2.0. See [LICENSE](../LICENSE) for details.
-
-## Acknowledgement
-
-We would like to thank the [Wan Team](https://github.com/Wan-Video/Wan2.2), the [OpenMOSS Team](https://github.com/OpenMOSS/MOVA), and the [VideoX-Fun Team](https://github.com/aigc-apps/VideoX-Fun) for their outstanding open-source work on Wan, MOVA, and VideoX-Fun, respectively.
