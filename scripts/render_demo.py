@@ -46,6 +46,13 @@ VAE_TILE_SIZE = 512
 VAE_TILE_OVERLAP = 64
 VAE_TEMPORAL_SIZE = 64
 VAE_TEMPORAL_OVERLAP = 8
+DEFAULT_PROMPT = (
+    "A cheerful hand-drawn yellow-eared cartoon character gently waves both arms, "
+    "soft breeze moving the grass, small birds chirping, colorful clean animation"
+)
+DEFAULT_NEGATIVE_PROMPT = (
+    "static, blurry, distorted, extra limbs, subtitles, watermark, low quality, silent"
+)
 
 
 def load_image(path: Path) -> torch.Tensor:
@@ -216,11 +223,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, default=COMFY_ROOT / "input" / "example.png")
     parser.add_argument("--output-dir", type=Path, default=REPO_ROOT / "outputs" / "demo")
-    parser.add_argument("--steps", type=int, default=12)
+    parser.add_argument("--steps", type=int, default=20)
     parser.add_argument("--seed", type=int, default=20260912)
     parser.add_argument("--duration", type=float, default=2.0)
     parser.add_argument("--fps", type=float, default=8.0)
     parser.add_argument("--tokens", type=int, default=64)
+    parser.add_argument("--prompt", default=DEFAULT_PROMPT)
+    parser.add_argument("--negative-prompt", default=DEFAULT_NEGATIVE_PROMPT)
     parser.add_argument(
         "--resume", action="store_true",
         help="Atomically checkpoint each completed Creator Euler step and resume it after interruption.",
@@ -234,18 +243,17 @@ def main() -> None:
         "--refiner-only", action="store_true",
         help="Refine existing base frames using the cached prompt without loading Creator or T5.",
     )
+    stages.add_argument(
+        "--creator-only", action="store_true",
+        help="Render and mux the Creator result, then exit before loading the Refiner.",
+    )
     args = parser.parse_args()
 
     root = REPO_ROOT / "checkpoints"
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    prompt = (
-        "A cheerful hand-drawn yellow-eared cartoon character gently waves both arms, "
-        "soft breeze moving the grass, small birds chirping, colorful clean animation"
-    )
-    negative_prompt = (
-        "static, blurry, distorted, extra limbs, subtitles, watermark, low quality, silent"
-    )
+    prompt = args.prompt
+    negative_prompt = args.negative_prompt
     started = time.time()
     audio_path = output_dir / "dreamx_demo.wav"
     base_frames = output_dir / "base_frames"
@@ -291,7 +299,13 @@ def main() -> None:
         guider.set_conds(positive, negative)
         guider.set_scales(5.0, 3.5, 3.5, True, True)
         noise = comfy.sample.prepare_noise(latent["samples"], args.seed)
-        sigmas = comfy.samplers.simple_scheduler(model.get_model_object("model_sampling"), args.steps)
+        # ComfyUI's ``normal`` schedule is the native equivalent of the released
+        # Diffusers FlowMatchEulerDiscreteScheduler.set_timesteps() sequence.
+        # ``simple`` subsamples the 1,000-point table and diverges sharply near
+        # sigma=0, so it must not be used for DreamX inference.
+        sigmas = comfy.samplers.normal_scheduler(
+            model.get_model_object("model_sampling"), args.steps
+        )
         checkpoint_path = output_dir / "creator_sampling_checkpoint.pt"
         fingerprint = checkpoint_fingerprint({
             "steps": args.steps,
@@ -364,7 +378,7 @@ def main() -> None:
         if base_images.ndim == 5:
             base_images = base_images.reshape(-1, *base_images.shape[-3:])
         base_images = base_images[:frames]
-        audio_vae = load_audio_vae(root, torch.bfloat16)
+        audio_vae = load_audio_vae(root, torch.float32)
         waveform = audio_vae.decode(audio_latent)[..., : latent["dreamx_audio_samples"]]
         save_wav(waveform, audio_path, audio_vae.sample_rate)
         del audio_vae, waveform
@@ -373,6 +387,10 @@ def main() -> None:
         save_frames(base_images, base_frames)
         mux_video(base_frames, audio_path, args.fps, base_video)
         print(f"Base video: {base_video}", flush=True)
+
+    if args.creator_only:
+        print(f"Completed in {time.time() - started:.1f}s", flush=True)
+        return
 
     refiner = load_refiner(
         root, torch.bfloat16, window_chunk=1, kv_history_frames=3

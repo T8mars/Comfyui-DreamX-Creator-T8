@@ -47,16 +47,19 @@ frontend workflows onto the canvas:
 See [`COMFYUI.md`](./COMFYUI.md) for the model layout, node graph, VRAM notes,
 and verification commands. Model weights are not bundled with the node package.
 
-### 2.0.0 compatibility notes
+### 2.0.1 compatibility notes
 
 - The Creator and Refiner load their vendored torch layers coherently on the
   GPU, avoiding mixed CPU/CUDA weights under ComfyUI's generic partial-offload
   path.
 - One synchronized audio/video pair is generated per execution; use queue batching
   for multiple seed variants.
-- Duration is rounded to the nearest Wan-compatible `4N+1` frame count (5 s at
-  24 FPS becomes 121 frames), and the Refiner exposes only its exact-length IMAGE
+- Duration is truncated down to a Wan-compatible `4N+1` frame count (5 s at
+  24 FPS becomes 117 frames), and the Refiner exposes only its exact-length IMAGE
   sequence instead of a padded generic LATENT.
+- The Creator example uses ComfyUI's `normal` scheduler with Euler at 20 steps,
+  matching the released Diffusers FlowMatch timestep sequence. The bundled Audio
+  VAE stays in float32, matching the released decoder path.
 - The shipped Creator UI graph uses native `VAEDecodeTiled`, while the Refiner
   tiles its Wan VAE encode/decode internally, avoiding long-video cuDNN failures.
 - The Refiner loader defaults to `window_chunk=1` and three latent KV-history

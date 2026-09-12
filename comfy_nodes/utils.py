@@ -155,9 +155,11 @@ def compute_dynamic_resolution(
 
 
 def snap_video_frames(duration: float, fps: float, temporal_stride: int = 4) -> int:
-    requested = max(1.0, float(duration) * float(fps))
-    latent_intervals = math.floor((requested - 1.0) / temporal_stride + 0.5)
-    return max(1, latent_intervals * temporal_stride + 1)
+    # Match the released inference pipeline exactly: truncate the requested
+    # frame count, then floor to a VAE-compatible 4n+1 sequence length.
+    requested = max(1, int(float(duration) * float(fps)))
+    latent_intervals = (requested - 1) // temporal_stride
+    return latent_intervals * temporal_stride + 1
 
 
 def tensor_streams(value):

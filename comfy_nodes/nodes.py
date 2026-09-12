@@ -36,6 +36,10 @@ ROOT_INPUT = lambda: io.String.Input(
 DTYPE_INPUT = lambda: io.Combo.Input(
     "dtype", options=["bfloat16", "float16", "float32"], default="bfloat16"
 )
+AUDIO_DTYPE_INPUT = lambda: io.Combo.Input(
+    "dtype", options=["float32", "bfloat16", "float16"], default="float32",
+    tooltip="The released Creator Audio VAE decodes in float32.",
+)
 
 
 class DreamXCreatorModelLoader(io.ComfyNode):
@@ -95,7 +99,7 @@ class DreamXAudioVaeLoader(io.ComfyNode):
             node_id="DreamXAudioVaeLoader",
             display_name="DreamX Audio VAE Loader",
             category="DreamX-Creator/loaders",
-            inputs=[ROOT_INPUT(), DTYPE_INPUT()],
+            inputs=[ROOT_INPUT(), AUDIO_DTYPE_INPUT()],
             outputs=[AudioVAE.Output("audio_vae")],
         )
 
@@ -127,7 +131,9 @@ class DreamXBundleLoader(io.ComfyNode):
             load_model_patcher(root, torch_dtype),
             load_text_encoder(root, torch_dtype),
             load_wan_vae(root),
-            load_audio_vae(root, torch_dtype),
+            # The released pipeline keeps the DAC VAE in float32 even when the
+            # Creator DiT and UMT5 encoder run in bfloat16.
+            load_audio_vae(root, torch.float32),
         )
 
 

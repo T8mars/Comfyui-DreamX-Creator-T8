@@ -137,8 +137,8 @@
       ],
       "outputs": [{"name": "SIGMAS", "type": "SIGMAS", "links": [14]}],
       "properties": {"Node name for S&R": "BasicScheduler", "cnr_id": "comfy-core"},
-      "widgets_values": ["simple", 20, 1.0],
-      "widgets_values_named": {"scheduler": "simple", "steps": 20, "denoise": 1.0}
+      "widgets_values": ["normal", 20, 1.0],
+      "widgets_values_named": {"scheduler": "normal", "steps": 20, "denoise": 1.0}
     },
     {
       "id": 11, "type": "SamplerCustomAdvanced", "pos": [1830, 180], "size": [320, 280],

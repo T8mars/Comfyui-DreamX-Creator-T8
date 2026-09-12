@@ -59,6 +59,20 @@ def test_creator_uses_explicit_tiled_video_decode():
     }
 
 
+def test_creator_workflow_matches_released_flow_schedule():
+    workflow = json.loads(WORKFLOWS[0].read_text(encoding="utf-8"))
+    scheduler = next(node for node in workflow["nodes"] if node["type"] == "BasicScheduler")
+    sampler = next(node for node in workflow["nodes"] if node["type"] == "KSamplerSelect")
+
+    assert scheduler["widgets_values"] == ["normal", 20, 1.0]
+    assert scheduler["widgets_values_named"] == {
+        "scheduler": "normal",
+        "steps": 20,
+        "denoise": 1.0,
+    }
+    assert sampler["widgets_values"] == ["euler"]
+
+
 def test_refiner_exposes_only_frame_exact_image_output():
     workflow = json.loads(WORKFLOWS[1].read_text(encoding="utf-8"))
     loader = next(node for node in workflow["nodes"] if node["type"] == "DreamXRefinerLoader")

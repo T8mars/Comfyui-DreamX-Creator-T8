@@ -33,7 +33,8 @@ Use these nodes in order:
 4. `DreamX AV Flow Shifts` (the released model uses 5.0 / 5.0).
 5. `DreamX Multimodal Guider`.
 6. Native `RandomNoise`, `BasicScheduler`, `KSamplerSelect`, and
-   `SamplerCustomAdvanced`.
+   `SamplerCustomAdvanced`. Keep `BasicScheduler` on **normal**, 20 steps,
+   and `KSamplerSelect` on **euler** for the released FlowMatch pipeline.
 7. `DreamX Split AV Latent`, native `VAE Decode`, and
    `DreamX Audio VAE Decode`.
 8. Native `Create Video` and `Save Video`.
@@ -49,8 +50,10 @@ Drag `examples/dreamx_creator_ui.json` directly onto the ComfyUI canvas (or use
 
 DreamX emits one synchronized audio/video pair per execution, so `batch_size` is
 intentionally fixed at 1. Use ComfyUI's queue batch count to generate multiple
-seed variants. Requested duration is rounded to the nearest Wan-compatible `4N+1`
-frame count; for example, 5 seconds at 24 FPS becomes 121 frames (about 5.04 s).
+seed variants. Requested duration is truncated down to a Wan-compatible `4N+1`
+frame count; for example, 5 seconds at 24 FPS becomes 117 frames (4.875 s),
+matching the released pipeline's floor-to-`4n+1` rule. The Audio VAE defaults to
+float32, as in the released decoder.
 The graph deliberately uses native `VAEDecodeTiled` with 512 px / 64-frame tiles:
 on long video, cuDNN can report memory pressure as an execution failure rather
 than a standard OOM, which bypasses the ordinary VAE node's automatic fallback.
