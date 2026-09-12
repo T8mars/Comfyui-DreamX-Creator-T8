@@ -32,6 +32,7 @@
     },
     {
       "id": 3, "type": "CLIPTextEncode", "pos": [390, -110], "size": [470, 210],
+      "title": "Verified direct-512 motion / speech prompt",
       "flags": {}, "order": 2, "mode": 0,
       "inputs": [
         {"name": "clip", "type": "CLIP", "link": 2},
@@ -39,10 +40,11 @@
       ],
       "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "links": [4]}],
       "properties": {"Node name for S&R": "CLIPTextEncode", "cnr_id": "comfy-core"},
-      "widgets_values": ["A cinematic scene with natural motion, detailed lighting, synchronized environmental sound, high quality"]
+      "widgets_values": ["卡通角色正对镜头，保持原画的蓝天、绿地、黄色大耳朵和粉色裙子，身体稳定，轻微自然地挥手，嘴巴清楚自然地开合，用标准普通话说：你在干嘛。A stable hand-drawn cartoon character faces the camera, keeps the original composition and colors, gently moves and speaks Mandarin."]
     },
     {
       "id": 4, "type": "CLIPTextEncode", "pos": [390, 140], "size": [470, 190],
+      "title": "Verified stability negative prompt",
       "flags": {}, "order": 3, "mode": 0,
       "inputs": [
         {"name": "clip", "type": "CLIP", "link": 3},
@@ -50,10 +52,11 @@
       ],
       "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "links": [5]}],
       "properties": {"Node name for S&R": "CLIPTextEncode", "cnr_id": "comfy-core"},
-      "widgets_values": ["overexposed, static, blurry, subtitles, watermark, low quality, distorted, malformed"]
+      "widgets_values": ["色调艳丽，过曝，闪烁，颜色漂移，变形，肢体变化，背景变化，静态，细节模糊不清，字幕，水印，文字，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，音乐，歌唱，环境噪音，其他台词，英文对白"]
     },
     {
       "id": 5, "type": "DreamXFirstFrameAVLatent", "pos": [930, 100], "size": [390, 300],
+      "title": "Direct Creator output · square 256 tokens = 512×512",
       "flags": {}, "order": 4, "mode": 0,
       "inputs": [
         {"name": "positive", "type": "CONDITIONING", "link": 4},
@@ -75,8 +78,8 @@
         {"name": "fps", "type": "FLOAT", "links": [24]}
       ],
       "properties": {"Node name for S&R": "DreamXFirstFrameAVLatent"},
-      "widgets_values": [5.0, 24.0, 880, 1],
-      "widgets_values_named": {"duration": 5.0, "fps": 24.0, "target_spatial_tokens": 880, "batch_size": 1}
+      "widgets_values": [2.0, 24.0, 256, 1],
+      "widgets_values_named": {"duration": 2.0, "fps": 24.0, "target_spatial_tokens": 256, "batch_size": 1}
     },
     {
       "id": 6, "type": "DreamXAVSamplingPatch", "pos": [390, 410], "size": [330, 140],
@@ -115,8 +118,8 @@
       "inputs": [{"name": "noise_seed", "type": "INT", "widget": {"name": "noise_seed"}, "link": null}],
       "outputs": [{"name": "NOISE", "type": "NOISE", "links": [11]}],
       "properties": {"Node name for S&R": "RandomNoise", "cnr_id": "comfy-core"},
-      "widgets_values": [20260912, "randomize"],
-      "widgets_values_named": {"noise_seed": 20260912}
+      "widgets_values": [20260914, "fixed"],
+      "widgets_values_named": {"noise_seed": 20260914}
     },
     {
       "id": 9, "type": "KSamplerSelect", "pos": [1390, 430], "size": [310, 90],
@@ -217,8 +220,8 @@
       ],
       "outputs": [{"name": "video", "type": "VIDEO", "links": null}],
       "properties": {"Node name for S&R": "SaveVideo", "cnr_id": "comfy-core"},
-      "widgets_values": ["video/DreamX-Creator", {"format": "mp4", "codec": {"codec": "h264"}}],
-      "widgets_values_named": {"filename_prefix": "video/DreamX-Creator", "format": {"format": "mp4", "codec": {"codec": "h264"}}}
+      "widgets_values": ["video/DreamX-Creator-Direct", {"format": "mp4", "codec": {"codec": "h264"}}],
+      "widgets_values_named": {"filename_prefix": "video/DreamX-Creator-Direct", "format": {"format": "mp4", "codec": {"codec": "h264"}}}
     }
   ],
   "links": [
@@ -238,7 +241,7 @@
   ],
   "groups": [
     {"id": 1, "title": "1 · Load models and encode prompts", "bounding": [-30, -150, 920, 510], "color": "#3f789e", "font_size": 24},
-    {"id": 2, "title": "2 · Build synchronized A/V latent", "bounding": [890, 40, 470, 400], "color": "#3f9e62", "font_size": 24},
+    {"id": 2, "title": "2 · Direct 512×512 synchronized A/V (square input)", "bounding": [890, 40, 470, 400], "color": "#3f9e62", "font_size": 24},
     {"id": 3, "title": "3 · Native ComfyUI sampling", "bounding": [1350, -100, 840, 700], "color": "#8b5ca6", "font_size": 24},
     {"id": 4, "title": "4 · Decode and save video", "bounding": [2190, 10, 1660, 480], "color": "#a67d3f", "font_size": 24}
   ],

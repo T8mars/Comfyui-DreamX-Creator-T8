@@ -48,6 +48,21 @@ mapped onto ComfyUI's single packed-latent schedule; the released preset is 5.0/
 Drag `examples/dreamx_creator_ui.json` directly onto the ComfyUI canvas (or use
 **Workflows → Open**) and select a start image in `Load Image`.
 
+The shipped quick-start profile renders directly from Creator at 256 spatial
+tokens; a square input therefore produces 512×512 output. It uses 2 seconds,
+24 FPS, 20 steps, and a fixed verified seed, producing 45 frames (1.875 s) after
+the native `4N+1` frame snap. Inspect the decoded Creator video before optionally
+sending it to the separate Refiner workflow. Do not rely on
+2× refinement to repair an already overexposed, structurally collapsed, or
+flickering 256×256 base sample—increase Creator spatial tokens or change the seed
+first.
+
+The included prompt asks the native joint model to say “你在干嘛”, but native
+speech generation is stochastic and does not guarantee an exact transcript.
+The separately verified exact-word sample used operating-system TTS post-dubbing;
+that post-processing is intentionally not represented as native DreamX audio in
+this UI workflow.
+
 DreamX emits one synchronized audio/video pair per execution, so `batch_size` is
 intentionally fixed at 1. Use ComfyUI's queue batch count to generate multiple
 seed variants. Requested duration is truncated down to a Wan-compatible `4N+1`

@@ -73,6 +73,42 @@ def test_creator_workflow_matches_released_flow_schedule():
     assert sampler["widgets_values"] == ["euler"]
 
 
+def test_creator_workflow_defaults_to_verified_direct_512_profile():
+    workflow = json.loads(WORKFLOWS[0].read_text(encoding="utf-8"))
+    positive = next(
+        node
+        for node in workflow["nodes"]
+        if node["id"] == 3 and node["type"] == "CLIPTextEncode"
+    )
+    negative = next(
+        node
+        for node in workflow["nodes"]
+        if node["id"] == 4 and node["type"] == "CLIPTextEncode"
+    )
+    first_frame = next(
+        node for node in workflow["nodes"] if node["type"] == "DreamXFirstFrameAVLatent"
+    )
+    noise = next(node for node in workflow["nodes"] if node["type"] == "RandomNoise")
+    save = next(node for node in workflow["nodes"] if node["type"] == "SaveVideo")
+
+    assert first_frame["widgets_values"] == [2.0, 24.0, 256, 1]
+    assert first_frame["widgets_values_named"] == {
+        "duration": 2.0,
+        "fps": 24.0,
+        "target_spatial_tokens": 256,
+        "batch_size": 1,
+    }
+    assert noise["widgets_values"] == [20260914, "fixed"]
+    assert noise["widgets_values_named"] == {"noise_seed": 20260914}
+    assert "你在干嘛" in positive["widgets_values"][0]
+    assert "保持原画" in positive["widgets_values"][0]
+    assert "过曝" in negative["widgets_values"][0]
+    assert "颜色漂移" in negative["widgets_values"][0]
+    assert save["widgets_values_named"]["filename_prefix"] == (
+        "video/DreamX-Creator-Direct"
+    )
+
+
 def test_refiner_exposes_only_frame_exact_image_output():
     workflow = json.loads(WORKFLOWS[1].read_text(encoding="utf-8"))
     loader = next(node for node in workflow["nodes"] if node["type"] == "DreamXRefinerLoader")

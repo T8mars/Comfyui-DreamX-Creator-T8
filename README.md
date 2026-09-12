@@ -60,6 +60,12 @@ and verification commands. Model weights are not bundled with the node package.
 - The Creator example uses ComfyUI's `normal` scheduler with Euler at 20 steps,
   matching the released Diffusers FlowMatch timestep sequence. The bundled Audio
   VAE stays in float32, matching the released decoder path.
+- The quick-start UI profile now generates directly at 256 spatial tokens
+  (512×512 for a square input), 2 seconds / 24 FPS / 20 steps, with a verified
+  fixed seed. Its `4N+1` frame snap produces 45 frames (1.875 s). Check the
+  Creator output before optional 2× refinement; the Refiner cannot recover a
+  collapsed low-resolution base sample. Native speech is stochastic, so the
+  prompt can request exact wording but cannot guarantee its transcript.
 - The shipped Creator UI graph uses native `VAEDecodeTiled`, while the Refiner
   tiles its Wan VAE encode/decode internally, avoiding long-video cuDNN failures.
 - The Refiner loader defaults to `window_chunk=1` and three latent KV-history
